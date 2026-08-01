@@ -2,6 +2,8 @@ window.SCIENCE_UNIT_DATA = window.SCIENCE_UNIT_DATA || {};
 
 window.SCIENCE_UNIT_DATA.plants = {
   id: "plants",
+  number: "01",
+  area: "LIFE",
   title: "植物の発芽と成長",
   subtitle: "インゲンマメを研究して、植物の一生を読み解こう",
   phases: {
@@ -153,5 +155,6 @@ window.SCIENCE_UNIT_DATA.plants = {
         }
       ]
     }
-  }
+  },
+  completion: "条件を1つだけ変えて比べると、結果のちがいが何によるものか考えられます。考察では、データから分かる範囲をこえないことも大切です。"
 };
