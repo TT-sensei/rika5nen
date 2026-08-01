@@ -97,7 +97,7 @@
       <section class="unit-head">
         <button class="back-button" type="button" data-action="home">← 単元選択へ</button>
         <div class="unit-title-row">
-          <div><span class="eyebrow">UNIT 01 / LIFE</span><h1>${unit.title}</h1><p>${unit.subtitle}</p></div>
+          <div><span class="eyebrow">UNIT ${unit.number || "--"} / ${unit.area || "SCIENCE"}</span><h1>${unit.title}</h1><p>${unit.subtitle}</p></div>
           <div class="unit-total"><strong>${percent}%</strong><span>ノート完成度</span></div>
         </div>
       </section>
@@ -173,10 +173,14 @@
     const scenario = phase.scenarios[index];
     const target = document.getElementById("phase-content");
     currentSelections = {};
+    const selector = scenario.mode === "select" ? `
+      <div class="observation-rule"><b>${scenario.instruction || "必要な項目をすべて選ぼう"}</b><span>選び直すときは、もう一度タップ</span></div>
+      <div class="condition-grid">${scenario.options.map(option => `<article class="condition-card observation-card" data-option-card="${option.id}"><h4>${option.name}</h4><p>${option.detail}</p><button class="select-option" type="button" data-option="${option.id}">選ぶ</button></article>`).join("")}</div>` : `
+      <div class="condition-rule"><div class="rule-box"><b>変える条件</b><br>調べたいものを1つだけ</div><div class="rule-box control"><b>そろえる条件</b><br>結果に関わるほかの条件すべて</div></div>
+      <div class="condition-grid">${scenario.conditions.map(condition => `<article class="condition-card" data-condition-card="${condition.id}"><h4>${condition.name}</h4><p>${condition.detail}</p><div class="condition-actions"><button type="button" data-condition="${condition.id}" data-role="change">変える</button><button type="button" data-condition="${condition.id}" data-role="control">そろえる</button></div></article>`).join("")}</div>`;
     target.innerHTML = phaseIntro(phase.title, phase.lead, index, phase.scenarios.length) + `
       <div class="question-banner"><small>調べたいこと</small><h3>${scenario.question}</h3></div>
-      <div class="condition-rule"><div class="rule-box"><b>変える条件</b><br>調べたいものを1つだけ</div><div class="rule-box control"><b>そろえる条件</b><br>結果に関わるほかの条件すべて</div></div>
-      <div class="condition-grid">${scenario.conditions.map(condition => `<article class="condition-card" data-condition-card="${condition.id}"><h4>${condition.name}</h4><p>${condition.detail}</p><div class="condition-actions"><button type="button" data-condition="${condition.id}" data-role="change">変える</button><button type="button" data-condition="${condition.id}" data-role="control">そろえる</button></div></article>`).join("")}</div>
+      ${selector}
       <div class="feedback" id="feedback"></div>
       <div class="action-row"><button class="secondary-button" type="button" data-prev ${index === 0 ? "disabled" : ""}>前へ</button><button class="primary-button" type="button" data-check>実験方法を確かめる</button></div>`;
 
@@ -188,6 +192,14 @@
       card.classList.toggle("is-change", currentSelections[id] === "change");
       card.classList.toggle("is-control", currentSelections[id] === "control");
       card.querySelectorAll("button").forEach(b => b.classList.toggle("active", currentSelections[id] === b.dataset.role));
+    }));
+    target.querySelectorAll("[data-option]").forEach(button => button.addEventListener("click", () => {
+      const id = button.dataset.option;
+      currentSelections[id] = !currentSelections[id];
+      const card = target.querySelector(`[data-option-card="${id}"]`);
+      card.classList.toggle("is-selected", currentSelections[id]);
+      button.classList.toggle("active", currentSelections[id]);
+      button.textContent = currentSelections[id] ? "選択中 ✓" : "選ぶ";
     }));
     target.querySelector("[data-prev]").addEventListener("click", () => { progress.index = Math.max(0, index - 1); ProgressStore.save(); renderPreparation(); });
     target.querySelector("[data-check]").addEventListener("click", event => {
@@ -211,6 +223,7 @@
   }
 
   function checkPreparation(scenario, index, total, checkButton) {
+    if (scenario.mode === "select") return checkSelectionPreparation(scenario, index, total, checkButton);
     const progress = ProgressStore.getUnit(view.unitId).preparation;
     const changeSelected = Object.keys(currentSelections).filter(id => currentSelections[id] === "change");
     const controlSelected = Object.keys(currentSelections).filter(id => currentSelections[id] === "control");
@@ -235,7 +248,7 @@
     progress.perfectFirstTry = false;
     [...wrongChange, ...missingChange, ...wrongControl, ...missingControls].forEach(id => {
       const condition = scenario.conditions.find(c => c.id === id);
-      if (condition) ProgressStore.addMistake(id, condition.name);
+      if (condition) ProgressStore.addMistake(`${view.unitId}:${id}`, condition.name);
     });
     const reasons = [];
     if (changeSelected.length !== 1) reasons.push("変える条件は1つだけにしよう。");
@@ -244,6 +257,36 @@
     if (wrongControl.length) reasons.push("同じカードを別の役割にしていないか見直そう。");
     feedback.className = "feedback show try";
     feedback.innerHTML = `<strong>あと一歩。実験を見直そう</strong><br>${reasons.join(" ")}`;
+    ProgressStore.save();
+  }
+
+  function checkSelectionPreparation(scenario, index, total, checkButton) {
+    const progress = ProgressStore.getUnit(view.unitId).preparation;
+    const selected = Object.keys(currentSelections).filter(id => currentSelections[id]);
+    const missing = scenario.correct.filter(id => !selected.includes(id));
+    const extra = selected.filter(id => !scenario.correct.includes(id));
+    const correct = !missing.length && !extra.length;
+    const feedback = document.getElementById("feedback");
+    progress.attempts[scenario.id] = (progress.attempts[scenario.id] || 0) + 1;
+    if (correct) {
+      feedback.className = "feedback show good";
+      feedback.innerHTML = `<strong>観察計画成立！</strong><br>${scenario.success}`;
+      checkButton.textContent = index === total - 1 ? "観察準備フェーズ完了" : "次の計画へ";
+      checkButton.dataset.advance = "true";
+      document.querySelectorAll("[data-option]").forEach(button => button.disabled = true);
+      ProgressStore.save();
+      return;
+    }
+    progress.perfectFirstTry = false;
+    [...missing, ...extra].forEach(id => {
+      const option = scenario.options.find(item => item.id === id);
+      if (option) ProgressStore.addMistake(`${view.unitId}:${id}`, option.name);
+    });
+    const reasons = [];
+    if (missing.length) reasons.push("目的を調べるために必要な項目が、まだあります。");
+    if (extra.length) reasons.push("その項目は、今回の目的に直接必要か考え直そう。");
+    feedback.className = "feedback show try";
+    feedback.innerHTML = `<strong>観察の目的に戻ろう</strong><br>${reasons.join(" ")}`;
     ProgressStore.save();
   }
 
@@ -283,15 +326,20 @@
     if (!visual) return "";
     if (visual.type === "table") return `<div class="result-visual"><table class="data-table"><thead><tr>${visual.headers.map(x => `<th>${x}</th>`).join("")}</tr></thead><tbody>${visual.rows.map(row => `<tr>${row.map(x => `<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
     if (visual.type === "bars") return `<div class="result-visual"><div class="bar-chart" style="--bars:${visual.bars.length}" role="img" aria-label="${visual.bars.map(b => `${b.label} ${b.value}${visual.unit}`).join("、")}">${visual.bars.map(b => `<div class="bar" style="--h:${b.value / visual.max * 100}%"><b>${b.value}${visual.unit}</b><span>${b.label}</span></div>`).join("")}</div><p class="evidence-note">※ 初めの大きさ・水・肥料・育てた日数は同じ</p></div>`;
+    if (visual.type === "cards") return `<div class="result-visual visual-cards">${visual.items.map((item, i) => `<span><b>${i + 1}</b>${item}</span>`).join("")}</div>`;
+    if (visual.type === "timeline") return `<div class="result-visual timeline-visual">${visual.items.map((item, i) => `<span>${item}</span>${i < visual.items.length - 1 ? '<b aria-hidden="true">→</b>' : ""}`).join("")}</div>`;
+    if (visual.type === "river") return `<div class="result-visual river-visual" role="img" aria-label="川のカーブ。Aが外側、Bが内側"><svg viewBox="0 0 520 220" aria-hidden="true"><path class="river-bank" d="M18 45C170 4 153 186 306 158c73-13 107-86 197-56"/><path class="river-bank" d="M18 112c98-25 116 122 298 102 97-11 121-65 187-48"/><path class="flow-line" d="M40 78c105-7 126 92 273 99 79 4 111-45 170-43"/><path class="arrow-head" d="m467 124 18 10-18 11"/></svg><span class="river-label outer">${visual.outer}</span><span class="river-label inner">${visual.inner}</span></div>`;
     return "";
   }
 
   function renderCompletion() {
     const progress = ProgressStore.getUnit(view.unitId);
+    const unit = window.SCIENCE_UNIT_DATA[view.unitId];
+    const total = unit.phases.consideration.questions.length;
     const answers = Object.values(progress.consideration.answers);
     const score = answers.filter(Boolean).length;
     const target = document.getElementById("phase-content");
-    target.innerHTML = `<div class="completion"><div class="completion-mark">✓</div><span class="eyebrow">UNIT COMPLETE</span><h3>植物研究ノート 完成！</h3><p>条件を1つだけ変えて比べると、結果のちがいが何によるものか考えられます。考察では、データから分かる範囲をこえないことも大切です。</p><p><strong>考察の初回正解：${score} / 5</strong>${progress.preparation.perfectFirstTry ? "　・　研究者レベル達成" : ""}</p><div class="action-row"><button class="secondary-button" type="button" data-retry>考察をもう一度</button><button class="primary-button" type="button" data-home>単元選択へ</button></div></div>`;
+    target.innerHTML = `<div class="completion"><div class="completion-mark">✓</div><span class="eyebrow">UNIT COMPLETE</span><h3>${unit.title} 研究ノート完成！</h3><p>${unit.completion || "観察や実験の結果を根拠に、条件と結果の関係を考えられました。"}</p><p><strong>考察の初回正解：${score} / ${total}</strong>${progress.preparation.perfectFirstTry ? "　・　研究者レベル達成" : ""}</p><div class="action-row"><button class="secondary-button" type="button" data-retry>考察をもう一度</button><button class="primary-button" type="button" data-home>単元選択へ</button></div></div>`;
     target.querySelector("[data-home]").addEventListener("click", renderHome);
     target.querySelector("[data-retry]").addEventListener("click", () => { progress.consideration.index = 0; progress.consideration.done = false; progress.consideration.answers = {}; ProgressStore.save(); renderConsideration(); });
   }
