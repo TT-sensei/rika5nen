@@ -6,10 +6,10 @@
   const FACTS = {
     3:{living:"生き物は、すみかに合ったすがたでくらしている",plants:"植物は、たね→芽→花→実の順に育つ",insects:"昆虫のからだは、あたま・むね・はらに分かれる",windrubber:"風やゴムの力で、物を動かせる",sound:"音が出ている物は、ふるえている",sun:"太陽の位置が変わると、かげの向きも変わる",light:"鏡では、光をはね返して進む",electricity:"電気を通る道がつながると、豆電球がつく",magnets:"磁石には、引き付ける物と引き付けない物がある",weight:"物は形を変えても、重さは変わらない"},
     4:{seasons:"気温の変化と、生き物のようすは関係している",body:"骨・関節・筋肉が協力して体を動かす",weather:"天気によって、1日の気温の変わり方にちがいがある",rainwater:"地面の傾きや土のつぶで、水のゆくえが変わる",moonstars:"星は時間とともに動いて見え、月は日ごとに形が変わる",electricity:"乾電池の数やつなぎ方で、モーターの回り方が変わる",airwater:"空気は縮むが、水はほとんど縮まない",volume:"空気・水・金属は温めると体積が大きくなる",heating:"物によって、温まり方と熱の伝わり方がちがう",waterstate:"水は温度によって、氷・水・水蒸気に姿を変える"},
-    5:{plants:"発芽や成長には、必要な条件がある",animals:"メダカも人も、命をつないで育つ",weather:"雲の動きは、天気の変化を予想する手がかり",river:"流れる水には、けずる・運ぶ・積もらせる働きがある",solutions:"物が水にとけても、全体の重さは変わらない",electromagnet:"電流の向きや強さ、巻き数で電磁石の働きが変わる"},
+    5:{plants:"発芽や成長には、必要な条件がある",animals:"メダカも人も、命をつないで育つ",weather:"雲の動きは、天気の変化を予想する手がかり",river:"流れる水には、けずる・運ぶ・積もらせる働きがある",solutions:"物が水にとけても、全体の重さは変わらない",electromagnet:"電流の向きや強さ、巻き数で電磁石の働きが変わる",pendulum:"ふりこの1往復する時間は、長さによって変わる"},
     6:{burning:"ものが燃え続けるには、酸素をふくむ空気が必要",body:"消化・呼吸・血液の流れが、体を支えている",plants:"植物は日光を使って、葉ででんぷんをつくる",environment:"生物は食べ物・空気・水でつながっている",moon:"月の形は、月・地球・太陽の位置関係で決まる",earth:"地層や化石は、昔の環境を知らせる証拠",lever:"てこは、重さと支点からの距離の組合せでつり合う",electricity:"電気は、光・熱・運動・音などに変えられる",solutions:"水溶液は、性質を示す証拠で見分けられる"}
   };
-  const ICONS={living:"🐞",plants:"🌱",insects:"🦋",windrubber:"💨",sound:"🔔",sun:"☀️",light:"🪞",electricity:"💡",magnets:"🧲",weight:"⚖️",seasons:"🌸",body:"💪",weather:"🌤️",rainwater:"🌧️",moonstars:"🌙",airwater:"💨",volume:"🌡️",heating:"🔥",waterstate:"🧊",animals:"🐟",river:"🏞️",solutions:"🧪",electromagnet:"🧲",burning:"🔥",environment:"🕸️",moon:"🌗",earth:"🌋",lever:"⚖️"};
+  const ICONS={living:"🐞",plants:"🌱",insects:"🦋",windrubber:"💨",sound:"🔔",sun:"☀️",light:"🪞",electricity:"💡",magnets:"🧲",weight:"⚖️",seasons:"🌸",body:"💪",weather:"🌤️",rainwater:"🌧️",moonstars:"🌙",airwater:"💨",volume:"🌡️",heating:"🔥",waterstate:"🧊",animals:"🐟",river:"🏞️",solutions:"🧪",electromagnet:"🧲",pendulum:"⏱️",burning:"🔥",environment:"🕸️",moon:"🌗",earth:"🌋",lever:"⚖️"};
   const empty = () => ({xp:0, discoveries:{}, rewards:{}, rank:0});
   let state; try { state = {...empty(), ...JSON.parse(localStorage.getItem(KEY))}; } catch (_) { state=empty(); }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {} };
