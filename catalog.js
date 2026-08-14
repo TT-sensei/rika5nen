@@ -58,7 +58,7 @@ window.SCIENCE_UNITS = [
     color: "#c16b45",
     available: true,
     icon: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 8v20a10 10 0 0 0 20 0V8"/><path d="M14 8h8v10h-8M34 8h-8v10h8"/><path d="M10 8h12M26 8h12"/></svg>'
-  }
+  },
   {
     id: "pendulum",
     number: "07",
