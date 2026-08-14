@@ -59,4 +59,14 @@ window.SCIENCE_UNITS = [
     available: true,
     icon: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 8v20a10 10 0 0 0 20 0V8"/><path d="M14 8h8v10h-8M34 8h-8v10h8"/><path d="M10 8h12M26 8h12"/></svg>'
   }
+  {
+    id: "pendulum",
+    number: "07",
+    title: "ふりこの運動",
+    shortTitle: "ふりこ",
+    description: "長さ・重さ・振れ幅を一つずつ変えて、1往復する時間のきまりを探ろう。",
+    color: "#7b68a8",
+    available: true,
+    icon: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7v5M12 12h24"/><path d="M24 12v5"/><path d="M24 17c0 13-7 16-7 22a7 7 0 0 0 14 0c0-6-7-9-7-22Z"/><path d="M17 39h14"/></svg>'
+  },
 ];
