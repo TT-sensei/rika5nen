@@ -53,6 +53,7 @@
           <div><span class="eyebrow">SELECT A UNIT</span><h2>研究する単元を選ぼう</h2></div>
           <p>記録はこの端末に自動で保存されます</p>
         </div>
+        ${window.ScienceGame ? window.ScienceGame.panel() : ""}
         <section class="unit-grid" aria-label="単元一覧">
           ${window.SCIENCE_UNITS.map(renderUnitCard).join("")}
         </section>
@@ -155,8 +156,10 @@
       const feedback = target.querySelector("#feedback");
       feedback.className = `feedback show ${correct ? "good" : "try"}`;
       feedback.innerHTML = `<strong>${correct ? "その通り！" : "ここを確認しよう"}</strong><br>${item.check.feedback}`;
+      const wasCompleted = Object.prototype.hasOwnProperty.call(progress.answers, index);
       progress.answers[index] = correct;
       ProgressStore.save();
+      window.ScienceGame?.award({ unitId: view.unitId, phase: "knowledge", itemId: item.id || index, correct, wasCompleted, unitComplete: false });
       target.querySelector("[data-next]").disabled = false;
     }));
     target.querySelector("[data-prev]").addEventListener("click", () => { progress.index = Math.max(0, index - 1); ProgressStore.save(); renderKnowledge(); });
@@ -242,6 +245,7 @@
       checkButton.dataset.advance = "true";
       document.querySelectorAll("[data-condition]").forEach(button => button.disabled = true);
       ProgressStore.save();
+      window.ScienceGame?.award({ unitId: view.unitId, phase: "preparation", itemId: scenario.id, correct: true, wasCompleted: progress.attempts[scenario.id] > 1, unitComplete: false });
       return;
     }
 
@@ -275,6 +279,7 @@
       checkButton.dataset.advance = "true";
       document.querySelectorAll("[data-option]").forEach(button => button.disabled = true);
       ProgressStore.save();
+      window.ScienceGame?.award({ unitId: view.unitId, phase: "preparation", itemId: scenario.id, correct: true, wasCompleted: progress.attempts[scenario.id] > 1, unitComplete: false });
       return;
     }
     progress.perfectFirstTry = false;
@@ -311,14 +316,16 @@
       const feedback = target.querySelector("#feedback");
       feedback.className = `feedback show ${correct ? "good" : "try"}`;
       feedback.innerHTML = `<strong>${correct ? "根拠に合っています" : "結果より広く言いすぎていないかな？"}</strong><br>${item.feedback}`;
+      const wasCompleted = Object.prototype.hasOwnProperty.call(progress.answers, item.id);
       progress.answers[item.id] = correct;
       ProgressStore.save();
+      window.ScienceGame?.award({ unitId: view.unitId, phase: "consideration", itemId: item.id, correct, wasCompleted, unitComplete: false });
       target.querySelector("[data-next]").disabled = false;
     }));
     target.querySelector("[data-prev]").addEventListener("click", () => { progress.index = Math.max(0, index - 1); ProgressStore.save(); renderConsideration(); });
     target.querySelector("[data-next]").addEventListener("click", () => {
       if (index < phase.questions.length - 1) { progress.index = index + 1; ProgressStore.save(); renderConsideration(); }
-      else { progress.done = true; ProgressStore.getUnit(view.unitId).cleared = true; ProgressStore.save(); renderCompletion(); showToast("植物単元クリア！"); }
+      else { progress.done = true; ProgressStore.getUnit(view.unitId).cleared = true; ProgressStore.save(); window.ScienceGame?.award({ unitId: view.unitId, phase: "consideration", itemId: "complete", correct: true, wasCompleted: true, unitComplete: true }); renderCompletion(); showToast(`${window.SCIENCE_UNIT_DATA[view.unitId].title}単元クリア！`); }
     });
   }
 
@@ -356,6 +363,7 @@
   }
 
   document.getElementById("home-button").addEventListener("click", renderHome);
+  document.getElementById("discovery-button").addEventListener("click", () => { app.innerHTML = window.ScienceGame?.catalog() || ""; app.querySelector("[data-home]")?.addEventListener("click", renderHome); });
   document.getElementById("notebook-button").addEventListener("click", () => { renderNotebook(); notebook.showModal(); });
   notebook.querySelector(".dialog-close").addEventListener("click", () => notebook.close());
   notebook.addEventListener("click", event => { if (event.target === notebook) notebook.close(); });
