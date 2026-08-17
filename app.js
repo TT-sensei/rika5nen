@@ -126,6 +126,7 @@
     if (view.phase === "knowledge") renderKnowledge();
     if (view.phase === "preparation") renderPreparation();
     if (view.phase === "consideration") renderConsideration();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function renderKnowledge() {
