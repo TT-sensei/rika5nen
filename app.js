@@ -87,7 +87,7 @@
     view = { page: "unit", unitId: id, phase: phase || view.phase || "knowledge" };
     currentSelections = {};
     renderUnit();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const phaseContent = document.getElementById("phase-content"); if (phaseContent) { const targetTop = phaseContent.getBoundingClientRect().top + window.scrollY - 82; window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" }); } else { window.scrollTo({ top: 0, behavior: "smooth" }); }
   }
 
   function renderUnit() {
