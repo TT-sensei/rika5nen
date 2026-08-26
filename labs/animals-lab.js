@@ -28,6 +28,8 @@
   function mount(root, { core, host, manifest }) {
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
+    let dayRange;
+
     function paint() {
       const stage = stageFor(state.days);
       ui.stage.innerHTML = fishSvg(state, stage);
@@ -38,14 +40,23 @@
         { label: "倍率", value: `${state.magnification}倍` }
       ], message });
     }
-    ui.panel.innerHTML = "";
-    const time = core.section(ui.panel, "時間を進める", "卵の中の変化を日ごとに観察");
-    core.range(time, { label: "経過日数", min: 0, max: 10, value: state.days, format: value => `${value}日`, onInput: value => { state.days = value; paint(); } });
-    const observe = core.section(ui.panel, "観察倍率");
-    core.options(observe, { label: "倍率", values: [{ id: "1", label: "1倍" }, { id: "2", label: "2倍" }, { id: "4", label: "4倍" }], value: state.magnification, onChange: value => { state.magnification = Number(value); paint(); } });
-    core.presets(ui.panel, [{ id: "egg", label: "受精直後" }, { id: "eye", label: "目が見える" }, { id: "fry", label: "稚魚" }], id => { state.days = id === "egg" ? 0 : id === "eye" ? 4 : 9; paint(); });
-    core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); paint(); }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const time = core.section(ui.panel, "時間を進める", "卵の中の変化を日ごとに観察");
+      dayRange = core.range(time, { label: "経過日数", min: 0, max: 10, value: state.days, format: value => `${value}日`, onInput: value => { state.days = value; paint(); } });
+      const observe = core.section(ui.panel, "観察倍率");
+      core.options(observe, { label: "倍率", values: [{ id: "1", label: "1倍" }, { id: "2", label: "2倍" }, { id: "4", label: "4倍" }], value: state.magnification, onChange: value => { state.magnification = Number(value); paint(); } });
+      core.presets(ui.panel, [{ id: "egg", label: "受精直後" }, { id: "eye", label: "目が見える" }, { id: "fry", label: "稚魚" }], id => {
+        state.days = id === "egg" ? 0 : id === "eye" ? 4 : 9;
+        buildControls();
+        paint();
+      });
+    }
+
+    buildControls();
+    core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); dayRange.set(state.days); paint(); }, "primary-button");
+    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "卵の中の変化を、学習内容に合わせて「細胞が増える → 体ができる → ふ化 → 稚魚」の順で表しています。";
     paint();
     return () => ui.destroy();

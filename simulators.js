@@ -264,6 +264,7 @@
     core.action(ui.actions, "1日進める", () => {
       if (mode === "growth") growth.days = Math.min(10, growth.days + 1);
       else flower.days = Math.min(7, flower.days + 1);
+      addModeControls();
       paint();
     }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
@@ -307,6 +308,8 @@
   function mount(root, { core, host, manifest }) {
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
+    let dayRange;
+
     function paint() {
       const stage = stageFor(state.days);
       ui.stage.innerHTML = fishSvg(state, stage);
@@ -317,14 +320,23 @@
         { label: "倍率", value: `${state.magnification}倍` }
       ], message });
     }
-    ui.panel.innerHTML = "";
-    const time = core.section(ui.panel, "時間を進める", "卵の中の変化を日ごとに観察");
-    core.range(time, { label: "経過日数", min: 0, max: 10, value: state.days, format: value => `${value}日`, onInput: value => { state.days = value; paint(); } });
-    const observe = core.section(ui.panel, "観察倍率");
-    core.options(observe, { label: "倍率", values: [{ id: "1", label: "1倍" }, { id: "2", label: "2倍" }, { id: "4", label: "4倍" }], value: state.magnification, onChange: value => { state.magnification = Number(value); paint(); } });
-    core.presets(ui.panel, [{ id: "egg", label: "受精直後" }, { id: "eye", label: "目が見える" }, { id: "fry", label: "稚魚" }], id => { state.days = id === "egg" ? 0 : id === "eye" ? 4 : 9; paint(); });
-    core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); paint(); }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const time = core.section(ui.panel, "時間を進める", "卵の中の変化を日ごとに観察");
+      dayRange = core.range(time, { label: "経過日数", min: 0, max: 10, value: state.days, format: value => `${value}日`, onInput: value => { state.days = value; paint(); } });
+      const observe = core.section(ui.panel, "観察倍率");
+      core.options(observe, { label: "倍率", values: [{ id: "1", label: "1倍" }, { id: "2", label: "2倍" }, { id: "4", label: "4倍" }], value: state.magnification, onChange: value => { state.magnification = Number(value); paint(); } });
+      core.presets(ui.panel, [{ id: "egg", label: "受精直後" }, { id: "eye", label: "目が見える" }, { id: "fry", label: "稚魚" }], id => {
+        state.days = id === "egg" ? 0 : id === "eye" ? 4 : 9;
+        buildControls();
+        paint();
+      });
+    }
+
+    buildControls();
+    core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); dayRange.set(state.days); paint(); }, "primary-button");
+    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "卵の中の変化を、学習内容に合わせて「細胞が増える → 体ができる → ふ化 → 稚魚」の順で表しています。";
     paint();
     return () => ui.destroy();
@@ -375,6 +387,7 @@
   function mount(root, { core, host, manifest }) {
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
+    let timeRange;
     function paint() {
       const stationIndex = STATIONS.findIndex(item => item.id === state.station);
       const current = weatherAt(state.time, stationIndex, state.wind, state.motion);
@@ -386,20 +399,23 @@
         { label: "経過", value: `${state.time}時間後` }
       ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `風向きを${direction}にすると、雲の動きと天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `風向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
     }
-    ui.panel.innerHTML = "";
-    const time = core.section(ui.panel, "時間を進める");
-    core.range(time, { label: "経過時間", min: 0, max: 8, value: state.time, format: value => `${value}時間後`, onInput: value => { state.time = value; paint(); } });
-    const cloud = core.section(ui.panel, "雲の動き");
-    core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; paint(); } });
-    const wind = core.section(ui.panel, "風向き");
-    core.options(wind, { label: "風", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
-    const map = core.section(ui.panel, "表示");
-    core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
-    const point = core.section(ui.panel, "観察地点");
-    core.options(point, { label: "地点", values: STATIONS.map(item => ({ id: item.id, label: item.label.replace("の地点", "") })), value: state.station, onChange: value => { state.station = value; paint(); } });
-    core.presets(ui.panel, [{ id: "normal", label: "西→東" }, { id: "reverse", label: "東→西" }, { id: "map", label: "天気図ON" }], id => { Object.assign(state, id === "reverse" ? { ...DEFAULT, wind: "east-west", time: 3 } : id === "map" ? { ...DEFAULT, time: 2, map: true } : { ...DEFAULT, time: 3 }); paint(); });
-    core.action(ui.actions, "1時間進める", () => { state.time = Math.min(8, state.time + 1); paint(); }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const time = core.section(ui.panel, "時間を進める");
+      timeRange = core.range(time, { label: "経過時間", min: 0, max: 8, value: state.time, format: value => `${value}時間後`, onInput: value => { state.time = value; paint(); } });
+      const cloud = core.section(ui.panel, "雲の動き");
+      core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; paint(); } });
+      const wind = core.section(ui.panel, "風向き");
+      core.options(wind, { label: "風", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
+      const map = core.section(ui.panel, "表示");
+      core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
+      const point = core.section(ui.panel, "観察地点");
+      core.options(point, { label: "地点", values: STATIONS.map(item => ({ id: item.id, label: item.label.replace("の地点", "") })), value: state.station, onChange: value => { state.station = value; paint(); } });
+      core.presets(ui.panel, [{ id: "normal", label: "西→東" }, { id: "reverse", label: "東→西" }, { id: "map", label: "天気図ON" }], id => { Object.assign(state, id === "reverse" ? { ...DEFAULT, wind: "east-west", time: 3 } : id === "map" ? { ...DEFAULT, time: 2, map: true } : { ...DEFAULT, time: 3 }); buildControls(); paint(); });
+    }
+    buildControls();
+    core.action(ui.actions, "1時間進める", () => { state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "天気の変化は、雲が動く方向と観察地点を比べるための簡易モデルです。";
     paint();
     return () => ui.destroy();
@@ -444,6 +460,7 @@
   function mount(root, { core, host, manifest }) {
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
+    let timeRange;
     function paint() {
       const result = model(state);
       ui.stage.innerHTML = riverSvg(state, result);
@@ -455,20 +472,23 @@
         { label: "たい積", value: `${result.deposition}/100` }
       ], message, note: `水を流した回数：${state.flow}回　／　川幅：${state.width}` });
     }
-    ui.panel.innerHTML = "";
-    const flow = core.section(ui.panel, "流れの条件");
-    core.range(flow, { label: "水の流れる速さ", min: 1, max: 5, value: state.speed, format: value => `${value}/5`, onInput: value => { state.speed = value; paint(); } });
-    core.range(flow, { label: "川の傾き", min: 1, max: 5, value: state.slope, format: value => `${value}/5`, onInput: value => { state.slope = value; paint(); } });
-    core.range(flow, { label: "水の量", min: 1, max: 5, value: state.amount, format: value => `${value}/5`, onInput: value => { state.amount = value; paint(); } });
-    core.range(flow, { label: "川幅", min: 1, max: 5, value: state.width, format: value => `${value}/5`, onInput: value => { state.width = value; paint(); } });
-    const sediment = core.section(ui.panel, "土砂の種類");
-    core.options(sediment, { label: "土砂", values: SEDIMENTS, value: state.sediment, onChange: value => { state.sediment = value; paint(); } });
-    const time = core.section(ui.panel, "時間");
-    core.range(time, { label: "経過時間", min: 0, max: 10, value: state.time, format: value => `${value}分`, onInput: value => { state.time = value; state.flow = Math.max(state.flow, Math.floor(value / 2)); paint(); } });
-    core.presets(ui.panel, [{ id: "erosion", label: "速い流れ" }, { id: "deposit", label: "ゆるやかな流れ" }, { id: "gravel", label: "れきを運ぶ" }], id => { Object.assign(state, id === "deposit" ? { ...DEFAULT, speed: 1, slope: 1, amount: 2 } : id === "gravel" ? { ...DEFAULT, speed: 4, slope: 4, amount: 4, sediment: "gravel" } : { ...DEFAULT, speed: 5, slope: 4, amount: 4 }); paint(); });
-    core.action(ui.actions, "水を流す", () => { state.flow = Math.min(10, state.flow + 1); state.time = Math.min(10, state.time + 1); paint(); }, "primary-button");
-    core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 1); paint(); }, "secondary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const flow = core.section(ui.panel, "流れの条件");
+      core.range(flow, { label: "水の流れる速さ", min: 1, max: 5, value: state.speed, format: value => `${value}/5`, onInput: value => { state.speed = value; paint(); } });
+      core.range(flow, { label: "川の傾き", min: 1, max: 5, value: state.slope, format: value => `${value}/5`, onInput: value => { state.slope = value; paint(); } });
+      core.range(flow, { label: "水の量", min: 1, max: 5, value: state.amount, format: value => `${value}/5`, onInput: value => { state.amount = value; paint(); } });
+      core.range(flow, { label: "川幅", min: 1, max: 5, value: state.width, format: value => `${value}/5`, onInput: value => { state.width = value; paint(); } });
+      const sediment = core.section(ui.panel, "土砂の種類");
+      core.options(sediment, { label: "土砂", values: SEDIMENTS, value: state.sediment, onChange: value => { state.sediment = value; paint(); } });
+      const time = core.section(ui.panel, "時間");
+      timeRange = core.range(time, { label: "経過時間", min: 0, max: 10, value: state.time, format: value => `${value}分`, onInput: value => { state.time = value; state.flow = Math.max(state.flow, Math.floor(value / 2)); paint(); } });
+      core.presets(ui.panel, [{ id: "erosion", label: "速い流れ" }, { id: "deposit", label: "ゆるやかな流れ" }, { id: "gravel", label: "れきを運ぶ" }], id => { Object.assign(state, id === "deposit" ? { ...DEFAULT, speed: 1, slope: 1, amount: 2 } : id === "gravel" ? { ...DEFAULT, speed: 4, slope: 4, amount: 4, sediment: "gravel" } : { ...DEFAULT, speed: 5, slope: 4, amount: 4 }); buildControls(); paint(); });
+    }
+    buildControls();
+    core.action(ui.actions, "水を流す", () => { state.flow = Math.min(10, state.flow + 1); state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
+    core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "川の上流・中流・下流を一つのモデルに置き、水の速さや量が変わったときの傾向を見えるようにしています。";
     paint();
     return () => ui.destroy();
@@ -510,6 +530,7 @@
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
     let evaporateButton;
+    let timeRange;
     function paint() {
       const model = solutionModel(state);
       ui.stage.innerHTML = solutionSvg(state, model);
@@ -529,19 +550,22 @@
       ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃` });
       if (evaporateButton) evaporateButton.textContent = state.evaporated ? "水に戻す" : "水を蒸発させる";
     }
-    ui.panel.innerHTML = "";
-    const water = core.section(ui.panel, "水と物質の条件");
-    core.range(water, { label: "水の量", min: 50, max: 300, step: 10, value: state.water, format: value => `${value}mL`, onInput: value => { state.water = value; state.evaporated = false; paint(); } });
-    core.range(water, { label: "水の温度", min: 10, max: 80, value: state.temperature, format: value => `${value}℃`, onInput: value => { state.temperature = value; state.evaporated = false; paint(); } });
-    core.range(water, { label: "とかす物質", min: 5, max: 60, step: 5, value: state.amount, format: value => `${value}g`, onInput: value => { state.amount = value; state.evaporated = false; paint(); } });
-    core.options(water, { label: "物質", values: SUBSTANCES, value: state.substance, onChange: value => { state.substance = value; state.evaporated = false; paint(); } });
-    const action = core.section(ui.panel, "とかし方と時間");
-    core.options(action, { label: "かき混ぜ", values: [{ id: "no", label: "しない" }, { id: "yes", label: "する" }], value: state.stirred ? "yes" : "no", onChange: value => { state.stirred = value === "yes"; paint(); } });
-    core.range(action, { label: "経過", min: 0, max: 10, value: state.time, format: value => `${value}/10`, onInput: value => { state.time = value; paint(); } });
-    core.presets(ui.panel, [{ id: "stir", label: "かき混ぜる" }, { id: "hot", label: "温度を上げる" }, { id: "alum", label: "ミョウバン" }], id => { Object.assign(state, id === "stir" ? { ...DEFAULT, stirred: true, time: 4 } : id === "hot" ? { ...DEFAULT, temperature: 70, time: 8 } : { ...DEFAULT, substance: "alum", temperature: 60, time: 8 }); paint(); });
-    core.action(ui.actions, "10秒進める", () => { state.time = Math.min(10, state.time + 2); paint(); }, "primary-button");
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const water = core.section(ui.panel, "水と物質の条件");
+      core.range(water, { label: "水の量", min: 50, max: 300, step: 10, value: state.water, format: value => `${value}mL`, onInput: value => { state.water = value; state.evaporated = false; paint(); } });
+      core.range(water, { label: "水の温度", min: 10, max: 80, value: state.temperature, format: value => `${value}℃`, onInput: value => { state.temperature = value; state.evaporated = false; paint(); } });
+      core.range(water, { label: "とかす物質", min: 5, max: 60, step: 5, value: state.amount, format: value => `${value}g`, onInput: value => { state.amount = value; state.evaporated = false; paint(); } });
+      core.options(water, { label: "物質", values: SUBSTANCES, value: state.substance, onChange: value => { state.substance = value; state.evaporated = false; paint(); } });
+      const action = core.section(ui.panel, "とかし方と時間");
+      core.options(action, { label: "かき混ぜ", values: [{ id: "no", label: "しない" }, { id: "yes", label: "する" }], value: state.stirred ? "yes" : "no", onChange: value => { state.stirred = value === "yes"; paint(); } });
+      timeRange = core.range(action, { label: "経過", min: 0, max: 10, value: state.time, format: value => `${value}/10`, onInput: value => { state.time = value; paint(); } });
+      core.presets(ui.panel, [{ id: "stir", label: "かき混ぜる" }, { id: "hot", label: "温度を上げる" }, { id: "alum", label: "ミョウバン" }], id => { Object.assign(state, id === "stir" ? { ...DEFAULT, stirred: true, time: 4 } : id === "hot" ? { ...DEFAULT, temperature: 70, time: 8 } : { ...DEFAULT, substance: "alum", temperature: 60, time: 8 }); buildControls(); paint(); });
+    }
+    buildControls();
+    core.action(ui.actions, "10秒進める", () => { state.time = Math.min(10, state.time + 2); timeRange.set(state.time); paint(); }, "primary-button");
     evaporateButton = core.action(ui.actions, "水を蒸発させる", () => { state.evaporated = !state.evaporated; paint(); }, "secondary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "「かき混ぜる」はとける速さに関係し、「最終的にとける量」は水の量・温度・物質の種類で変わるものとして表示しています。";
     paint();
     return () => ui.destroy();
@@ -584,18 +608,21 @@
         { label: "磁力の範囲", value: `${result.range}cm` }
       ], message, note: `電流：${state.current.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
     }
-    ui.panel.innerHTML = "";
-    const coil = core.section(ui.panel, "コイルと電流");
-    core.range(coil, { label: "コイルの巻き数", min: 50, max: 250, step: 10, value: state.turns, format: value => `${value}回`, onInput: value => { state.turns = value; paint(); } });
-    core.range(coil, { label: "電流の強さ", min: .1, max: 1, step: .1, value: state.current, format: value => `${Number(value).toFixed(1)}A`, onInput: value => { state.current = value; paint(); } });
-    core.options(coil, { label: "電池の数", values: [{ id: "1", label: "1個" }, { id: "2", label: "2個" }, { id: "3", label: "3個" }], value: state.batteries, onChange: value => { state.batteries = Number(value); paint(); } });
-    const coreSection = core.section(ui.panel, "鉄心と電流");
-    core.options(coreSection, { label: "鉄心", values: [{ id: "yes", label: "あり" }, { id: "no", label: "なし" }], value: state.core ? "yes" : "no", onChange: value => { state.core = value === "yes"; paint(); } });
-    core.options(coreSection, { label: "電流", values: [{ id: "on", label: "流す" }, { id: "off", label: "切る" }], value: state.on ? "on" : "off", onChange: value => { state.on = value === "on"; paint(); } });
-    core.presets(ui.panel, [{ id: "turns", label: "巻き数UP" }, { id: "iron", label: "鉄心あり" }, { id: "off", label: "電流を切る" }], id => { Object.assign(state, id === "turns" ? { ...DEFAULT, turns: 220 } : id === "iron" ? { ...DEFAULT, core: true } : { ...DEFAULT, on: false }); paint(); });
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const coil = core.section(ui.panel, "コイルと電流");
+      core.range(coil, { label: "コイルの巻き数", min: 50, max: 250, step: 10, value: state.turns, format: value => `${value}回`, onInput: value => { state.turns = value; paint(); } });
+      core.range(coil, { label: "電流の強さ", min: .1, max: 1, step: .1, value: state.current, format: value => `${Number(value).toFixed(1)}A`, onInput: value => { state.current = value; paint(); } });
+      core.options(coil, { label: "電池の数", values: [{ id: "1", label: "1個" }, { id: "2", label: "2個" }, { id: "3", label: "3個" }], value: state.batteries, onChange: value => { state.batteries = Number(value); paint(); } });
+      const coreSection = core.section(ui.panel, "鉄心と電流");
+      core.options(coreSection, { label: "鉄心", values: [{ id: "yes", label: "あり" }, { id: "no", label: "なし" }], value: state.core ? "yes" : "no", onChange: value => { state.core = value === "yes"; paint(); } });
+      core.options(coreSection, { label: "電流", values: [{ id: "on", label: "流す" }, { id: "off", label: "切る" }], value: state.on ? "on" : "off", onChange: value => { state.on = value === "on"; paint(); } });
+      core.presets(ui.panel, [{ id: "turns", label: "巻き数UP" }, { id: "iron", label: "鉄心あり" }, { id: "off", label: "電流を切る" }], id => { Object.assign(state, id === "turns" ? { ...DEFAULT, turns: 220 } : id === "iron" ? { ...DEFAULT, core: true } : { ...DEFAULT, on: false }); buildControls(); paint(); });
+    }
+    buildControls();
     core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "電池の数は電流を大きくする要因として扱い、巻き数・電流・鉄心を変えたときの磁力の変化を比べます。";
     paint();
     return () => ui.destroy();
@@ -626,6 +653,7 @@
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
     let animationFrame = 0;
+    let countOptions;
     const animate = () => {
       if (!state.measuring) return;
       paint();
@@ -645,17 +673,20 @@
         { label: "測定", value: state.measured ? `${state.measured}秒` : "ボタンで測る" }
       ], message, note: "測定は、同じ条件で同じ回数を比べるための目安です。" });
     }
-    ui.panel.innerHTML = "";
-    const conditions = core.section(ui.panel, "ふりこの条件");
-    core.range(conditions, { label: "ふりこの長さ", min: 20, max: 100, step: 10, value: state.length, format: value => `${value}cm`, onInput: value => { state.length = value; state.measured = 0; paint(); } });
-    core.range(conditions, { label: "おもりの重さ", min: 50, max: 200, step: 10, value: state.weight, format: value => `${value}g`, onInput: value => { state.weight = value; state.measured = 0; paint(); } });
-    core.range(conditions, { label: "ふれ幅", min: 5, max: 30, value: state.amplitude, format: value => `${value}°`, onInput: value => { state.amplitude = value; state.measured = 0; paint(); } });
-    const measure = core.section(ui.panel, "測る回数");
-    core.options(measure, { label: "振る回数", values: [{ id: "1", label: "1往復" }, { id: "10", label: "10往復" }, { id: "20", label: "20往復" }], value: state.count, onChange: value => { state.count = Number(value); state.measured = 0; paint(); } });
-    core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); paint(); });
-    core.action(ui.actions, "10往復を測る", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = true; paint(); cancelAnimationFrame(animationFrame); animationFrame = requestAnimationFrame(animate); }, "primary-button");
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const conditions = core.section(ui.panel, "ふりこの条件");
+      core.range(conditions, { label: "ふりこの長さ", min: 20, max: 100, step: 10, value: state.length, format: value => `${value}cm`, onInput: value => { state.length = value; state.measured = 0; paint(); } });
+      core.range(conditions, { label: "おもりの重さ", min: 50, max: 200, step: 10, value: state.weight, format: value => `${value}g`, onInput: value => { state.weight = value; state.measured = 0; paint(); } });
+      core.range(conditions, { label: "ふれ幅", min: 5, max: 30, value: state.amplitude, format: value => `${value}°`, onInput: value => { state.amplitude = value; state.measured = 0; paint(); } });
+      const measure = core.section(ui.panel, "測る回数");
+      countOptions = core.options(measure, { label: "振る回数", values: [{ id: "1", label: "1往復" }, { id: "10", label: "10往復" }, { id: "20", label: "20往復" }], value: state.count, onChange: value => { state.count = Number(value); state.measured = 0; paint(); } });
+      core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); buildControls(); paint(); });
+    }
+    buildControls();
+    core.action(ui.actions, "10往復を測る", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = true; countOptions.set(10); paint(); cancelAnimationFrame(animationFrame); animationFrame = requestAnimationFrame(animate); }, "primary-button");
     core.action(ui.actions, "振らせる / 止める", () => { state.measuring = !state.measuring; paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate); }, "secondary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); cancelAnimationFrame(animationFrame); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "ふりこの長さ・おもりの重さ・振れ幅を同時に変えず、一つずつ変化を確かめられるようにしています。";
     paint();
     return () => { cancelAnimationFrame(animationFrame); ui.destroy(); };

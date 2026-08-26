@@ -135,6 +135,7 @@
     core.action(ui.actions, "1日進める", () => {
       if (mode === "growth") growth.days = Math.min(10, growth.days + 1);
       else flower.days = Math.min(7, flower.days + 1);
+      addModeControls();
       paint();
     }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");

@@ -40,6 +40,7 @@
   function mount(root, { core, host, manifest }) {
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
+    let timeRange;
     function paint() {
       const stationIndex = STATIONS.findIndex(item => item.id === state.station);
       const current = weatherAt(state.time, stationIndex, state.wind, state.motion);
@@ -51,20 +52,23 @@
         { label: "経過", value: `${state.time}時間後` }
       ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `風向きを${direction}にすると、雲の動きと天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `風向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
     }
-    ui.panel.innerHTML = "";
-    const time = core.section(ui.panel, "時間を進める");
-    core.range(time, { label: "経過時間", min: 0, max: 8, value: state.time, format: value => `${value}時間後`, onInput: value => { state.time = value; paint(); } });
-    const cloud = core.section(ui.panel, "雲の動き");
-    core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; paint(); } });
-    const wind = core.section(ui.panel, "風向き");
-    core.options(wind, { label: "風", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
-    const map = core.section(ui.panel, "表示");
-    core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
-    const point = core.section(ui.panel, "観察地点");
-    core.options(point, { label: "地点", values: STATIONS.map(item => ({ id: item.id, label: item.label.replace("の地点", "") })), value: state.station, onChange: value => { state.station = value; paint(); } });
-    core.presets(ui.panel, [{ id: "normal", label: "西→東" }, { id: "reverse", label: "東→西" }, { id: "map", label: "天気図ON" }], id => { Object.assign(state, id === "reverse" ? { ...DEFAULT, wind: "east-west", time: 3 } : id === "map" ? { ...DEFAULT, time: 2, map: true } : { ...DEFAULT, time: 3 }); paint(); });
-    core.action(ui.actions, "1時間進める", () => { state.time = Math.min(8, state.time + 1); paint(); }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); paint(); }, "secondary-button");
+    function buildControls() {
+      ui.panel.innerHTML = "";
+      const time = core.section(ui.panel, "時間を進める");
+      timeRange = core.range(time, { label: "経過時間", min: 0, max: 8, value: state.time, format: value => `${value}時間後`, onInput: value => { state.time = value; paint(); } });
+      const cloud = core.section(ui.panel, "雲の動き");
+      core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; paint(); } });
+      const wind = core.section(ui.panel, "風向き");
+      core.options(wind, { label: "風", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
+      const map = core.section(ui.panel, "表示");
+      core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
+      const point = core.section(ui.panel, "観察地点");
+      core.options(point, { label: "地点", values: STATIONS.map(item => ({ id: item.id, label: item.label.replace("の地点", "") })), value: state.station, onChange: value => { state.station = value; paint(); } });
+      core.presets(ui.panel, [{ id: "normal", label: "西→東" }, { id: "reverse", label: "東→西" }, { id: "map", label: "天気図ON" }], id => { Object.assign(state, id === "reverse" ? { ...DEFAULT, wind: "east-west", time: 3 } : id === "map" ? { ...DEFAULT, time: 2, map: true } : { ...DEFAULT, time: 3 }); buildControls(); paint(); });
+    }
+    buildControls();
+    core.action(ui.actions, "1時間進める", () => { state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "天気の変化は、雲が動く方向と観察地点を比べるための簡易モデルです。";
     paint();
     return () => ui.destroy();
