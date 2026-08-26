@@ -21,7 +21,8 @@ rika5nen/
 ├── index.html
 ├── styles.css
 ├── app.js                 # 入口・問題学習の画面
-├── simulators.js          # GitHub Pages用のLAB実行バンドル
+├── simulators.js          # 互換用に残したLAB実行バンドル
+├── lab-runtime.js         # 入口が読むLAB実行バンドル
 ├── labs/
 │   ├── index.js           # LAB一覧と遅延読み込み
 │   ├── lab-core.js        # 共通シェル・操作・結果表示・エラー処理
