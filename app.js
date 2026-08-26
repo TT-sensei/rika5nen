@@ -755,6 +755,7 @@
   const app = document.getElementById("app");
   const notebook = document.getElementById("notebook-dialog");
   const notebookContent = document.getElementById("notebook-content");
+  const settings = document.getElementById("settings-dialog");
   const toast = document.getElementById("toast");
   let view = { page: "home", unitId: null, phase: "knowledge", homeTab: "simulation" };
   let currentSelections = {};
@@ -790,10 +791,6 @@
     const units = window.SCIENCE_UNITS || [];
     app.innerHTML = `
       <div class="page home-page">
-        <section class="home-dashboard-head">
-          <div><span class="eyebrow">SCIENCE LABORATORY / GRADE 5</span><h1>理科ラボ5</h1><p>条件を動かして、現象の変化を見つけよう。</p></div>
-          <span class="home-count">${units.length}単元</span>
-        </section>
         <nav class="home-mode-tabs" role="tablist" aria-label="学習モード">
           <button type="button" role="tab" aria-selected="${simulation}" data-home-tab="simulation" class="${simulation ? "active" : ""}"><span>🔬</span><b>シミュレーション</b><small>条件を変えてすぐ試す</small></button>
           <button type="button" role="tab" aria-selected="${!simulation}" data-home-tab="problems" class="${!simulation ? "active" : ""}"><span>📝</span><b>問題を解く</b><small>知識・実験・考察を学ぶ</small></button>
@@ -1140,6 +1137,15 @@
   document.getElementById("home-button").addEventListener("click", renderHome);
   document.getElementById("discovery-button").addEventListener("click", () => { window.RikaFiveLabRouter?.leave?.(); document.body.classList.remove("has-simulation"); app.innerHTML = window.ScienceGame?.catalog() || ""; app.querySelector("[data-home]")?.addEventListener("click", renderHome); });
   document.getElementById("notebook-button").addEventListener("click", () => { renderNotebook(); notebook.showModal(); });
+  document.getElementById("settings-button").addEventListener("click", () => settings.showModal());
+  document.getElementById("reset-button").addEventListener("click", () => {
+    if (confirm("学習記録をすべて消しますか？ この操作は元に戻せません。")) {
+      ProgressStore.reset();
+      settings.close();
+      renderHome("simulation");
+      showToast("学習記録を消しました");
+    }
+  });
   notebook.querySelector(".dialog-close").addEventListener("click", () => notebook.close());
   notebook.addEventListener("click", event => { if (event.target === notebook) notebook.close(); });
 
