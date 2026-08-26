@@ -798,11 +798,11 @@
           <button type="button" role="tab" aria-selected="${simulation}" data-home-tab="simulation" class="${simulation ? "active" : ""}"><span>🔬</span><b>シミュレーション</b><small>条件を変えてすぐ試す</small></button>
           <button type="button" role="tab" aria-selected="${!simulation}" data-home-tab="problems" class="${!simulation ? "active" : ""}"><span>📝</span><b>問題を解く</b><small>知識・実験・考察を学ぶ</small></button>
         </nav>
-        ${!simulation && window.ScienceGame ? window.ScienceGame.panel() : ""}
         <div class="section-heading compact-heading"><div><span class="eyebrow">${simulation ? "TRY THE MODEL" : "LEARN THE UNIT"}</span><h2>${simulation ? "試したい単元を選ぼう" : "学びたい単元を選ぼう"}</h2></div><p>${simulation ? "操作すると図と結果がすぐ変わります" : "学習記録はこの端末に保存されます"}</p></div>
         <section class="unit-grid ${simulation ? "simulation-grid" : "problem-grid"}" role="tabpanel" aria-label="${simulation ? "シミュレーション" : "問題"}の単元一覧">
           ${units.map(unit => simulation ? renderSimulationCard(unit) : renderUnitCard(unit)).join("")}
         </section>
+        ${window.ScienceGame ? `<section class="home-extras" aria-label="理科ラボのおまけ要素"><div class="home-extras-heading"><span class="eyebrow">EXTRA COLLECTION</span><h2>おまけ要素</h2><p>学習の合間に、発見やバッジを集めよう。</p></div>${window.ScienceGame.panel()}</section>` : ""}
       </div>`;
 
     app.querySelectorAll("[data-home-tab]").forEach(button => button.addEventListener("click", () => renderHome(button.dataset.homeTab)));
