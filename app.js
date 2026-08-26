@@ -823,7 +823,7 @@
       <p>${unit.description}</p>
       <div class="card-progress">
         <div class="progress-bar" aria-label="進み具合 ${Math.round(percent)}%"><span style="--progress:${percent}%"></span></div>
-        <div class="progress-label"><span>実験ノート</span><span>${Math.round(percent)}%</span></div>
+        <div class="progress-label"><span>問題の進み具合</span><span>${Math.round(percent)}%</span></div>
       </div>
     </${tag}>`;
   }
