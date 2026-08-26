@@ -3,7 +3,7 @@
   const notebook = document.getElementById("notebook-dialog");
   const notebookContent = document.getElementById("notebook-content");
   const toast = document.getElementById("toast");
-  let view = { page: "home", unitId: null, phase: "knowledge" };
+  let view = { page: "home", unitId: null, phase: "knowledge", homeTab: "simulation" };
   let currentSelections = {};
   let toastTimer;
 
@@ -29,40 +29,31 @@
     return [p.knowledge.done, p.preparation.done, p.consideration.done].filter(Boolean).length / 3 * 100;
   }
 
-  function renderHome() {
-    view = { page: "home", unitId: null, phase: "knowledge" };
+  function renderHome(tab) {
+    view = { page: "home", unitId: null, phase: "knowledge", homeTab: tab || view.homeTab || "simulation" };
+    const simulation = view.homeTab === "simulation";
+    const units = window.SCIENCE_UNITS || [];
     app.innerHTML = `
-      <div class="page">
-        <section class="hero">
-          <div>
-            <span class="eyebrow">SCIENCE LABORATORY / GRADE 5</span>
-            <h1>比べるから、わかる。</h1>
-            <p>理科の知識を使って実験を組み立て、結果から言えることを考えます。6つの単元を進めて、自分だけの実験ノートを完成させよう。</p>
-            <div class="phase-strip" aria-label="3つの学習段階">
-              <span class="phase-chip"><b>1</b> 知識を整理</span>
-              <span class="phase-chip"><b>2</b> 実験を準備</span>
-              <span class="phase-chip"><b>3</b> 結果を考察</span>
-            </div>
-          </div>
-          <div class="hero-visual" aria-hidden="true">
-            <div class="orbit"></div>
-            <div class="hero-flask"><svg viewBox="0 0 160 180"><path d="M58 12h44M65 12v55l-42 75c-6 12 2 26 16 26h82c14 0 22-14 16-26L95 67V12"/><path d="M38 120h84"/><circle cx="65" cy="108" r="5"/><circle cx="96" cy="138" r="7"/><path d="M61 59h38"/></svg></div>
-          </div>
+      <div class="page home-page">
+        <section class="home-dashboard-head">
+          <div><span class="eyebrow">SCIENCE LABORATORY / GRADE 5</span><h1>理科ラボ5</h1><p>条件を動かして、現象の変化を見つけよう。</p></div>
+          <span class="home-count">${units.length}単元</span>
         </section>
-        <div class="section-heading">
-          <div><span class="eyebrow">SELECT A UNIT</span><h2>研究する単元を選ぼう</h2></div>
-          <p>記録はこの端末に自動で保存されます</p>
-        </div>
-        ${window.ScienceGame ? window.ScienceGame.panel() : ""}
-        <section class="unit-grid" aria-label="単元一覧">
-          ${window.SCIENCE_UNITS.map(renderUnitCard).join("")}
+        <nav class="home-mode-tabs" aria-label="学習モード">
+          <button type="button" data-home-tab="simulation" class="${simulation ? "active" : ""}"><span>🔬</span><b>シミュレーション</b><small>条件を変えてすぐ試す</small></button>
+          <button type="button" data-home-tab="problems" class="${!simulation ? "active" : ""}"><span>📝</span><b>問題を解く</b><small>知識・実験・考察を学ぶ</small></button>
+        </nav>
+        ${!simulation && window.ScienceGame ? window.ScienceGame.panel() : ""}
+        <div class="section-heading compact-heading"><div><span class="eyebrow">${simulation ? "TRY THE MODEL" : "LEARN THE UNIT"}</span><h2>${simulation ? "試したい単元を選ぼう" : "学びたい単元を選ぼう"}</h2></div><p>${simulation ? "操作すると図と結果がすぐ変わります" : "学習記録はこの端末に保存されます"}</p></div>
+        <section class="unit-grid ${simulation ? "simulation-grid" : "problem-grid"}" aria-label="単元一覧">
+          ${units.map(unit => simulation ? renderSimulationCard(unit) : renderUnitCard(unit)).join("")}
         </section>
       </div>`;
 
-    app.querySelectorAll("button.unit-card").forEach(button => {
-      button.addEventListener("click", () => openUnit(button.dataset.unit));
-    });
-    history.replaceState(null, "", "#home");
+    app.querySelectorAll("[data-home-tab]").forEach(button => button.addEventListener("click", () => renderHome(button.dataset.homeTab)));
+    app.querySelectorAll("button.unit-card").forEach(button => button.addEventListener("click", () => openUnit(button.dataset.unit)));
+    app.querySelectorAll("[data-simulation]").forEach(button => button.addEventListener("click", () => openSimulation(button.dataset.simulation)));
+    history.replaceState(null, "", `#home/${view.homeTab}`);
   }
 
   function renderUnitCard(unit) {
@@ -82,12 +73,33 @@
     </${tag}>`;
   }
 
+  function renderSimulationCard(unit) {
+    return `<button class="unit-card simulation-card" type="button" data-simulation="${unit.id}" style="--unit-color:${unit.color}">
+      <div class="unit-top"><span class="unit-icon">${unit.icon}</span><span class="sim-card-label">LIVE MODEL</span></div>
+      <h3><small>${unit.number}</small> ${unit.title}</h3>
+      <p>${unit.description}</p>
+      <div class="simulation-card-action"><span>条件を変えて試す</span><b>→</b></div>
+    </button>`;
+  }
+
   function openUnit(id, phase) {
     if (!window.SCIENCE_UNIT_DATA[id]) return;
-    view = { page: "unit", unitId: id, phase: phase || view.phase || "knowledge" };
+    view = { page: "unit", unitId: id, phase: phase || view.phase || "knowledge", homeTab: "problems" };
     currentSelections = {};
     renderUnit();
     const phaseContent = document.getElementById("phase-content"); if (phaseContent) { const targetTop = phaseContent.getBoundingClientRect().top + window.scrollY - 82; window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" }); } else { window.scrollTo({ top: 0, behavior: "smooth" }); }
+  }
+
+  function openSimulation(id) {
+    if (!window.SCIENCE_UNIT_DATA[id] || !window.ScienceSim) return;
+    view = { page: "simulation", unitId: id, phase: "knowledge", homeTab: "simulation" };
+    currentSelections = {};
+    app.innerHTML = window.ScienceSim.render(id);
+    const root = app.querySelector("[data-sim-unit]");
+    window.ScienceSim.bind(root);
+    root.querySelector("[data-sim-home]")?.addEventListener("click", () => renderHome("simulation"));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    history.replaceState(null, "", `#sim/${id}`);
   }
 
   function renderUnit() {
@@ -108,7 +120,7 @@
       <section id="phase-content" class="phase-panel"></section>
     </div>`;
 
-    app.querySelector('[data-action="home"]').addEventListener("click", renderHome);
+    app.querySelector('[data-action="home"]').addEventListener("click", () => renderHome("problems"));
     app.querySelectorAll("[data-phase]").forEach(button => button.addEventListener("click", () => {
       view.phase = button.dataset.phase;
       currentSelections = {};
@@ -348,7 +360,7 @@
     const score = answers.filter(Boolean).length;
     const target = document.getElementById("phase-content");
     target.innerHTML = `<div class="completion"><div class="completion-mark">✓</div><span class="eyebrow">UNIT COMPLETE</span><h3>${unit.title} 研究ノート完成！</h3><p>${unit.completion || "観察や実験の結果を根拠に、条件と結果の関係を考えられました。"}</p><p><strong>考察の初回正解：${score} / ${total}</strong>${progress.preparation.perfectFirstTry ? "　・　研究者レベル達成" : ""}</p><div class="action-row"><button class="secondary-button" type="button" data-retry>考察をもう一度</button><button class="primary-button" type="button" data-home>単元選択へ</button></div></div>`;
-    target.querySelector("[data-home]").addEventListener("click", renderHome);
+    target.querySelector("[data-home]").addEventListener("click", () => renderHome("problems"));
     target.querySelector("[data-retry]").addEventListener("click", () => { progress.consideration.index = 0; progress.consideration.done = false; progress.consideration.answers = {}; ProgressStore.save(); renderConsideration(); });
   }
 
@@ -359,7 +371,7 @@
       return `<div class="stamp ${collected ? "collected" : ""}"><span class="stamp-mark">${collected ? "✓" : unit.number}</span><strong>${unit.shortTitle}</strong><small>${collected ? "研究完了" : unit.available ? "研究中" : "これから"}</small></div>`;
     }).join("")}</div><div class="mistake-box"><h3>条件カードのふりかえり</h3>${mistakes.length ? `<div class="mistake-tags">${mistakes.slice(0, 6).map(m => `<span class="mistake-tag">${escapeHtml(m.name)} × ${m.count}</span>`).join("")}</div><p class="evidence-note">回数が多いカードほど、次の実験で「変える／そろえる」を意識しよう。</p>` : `<p class="evidence-note">まだ記録はありません。実験準備に挑戦すると、見直しポイントがたまります。</p>`}</div><button class="reset-button" type="button" data-reset>この端末の学習記録を消す</button>`;
     notebookContent.querySelector("[data-reset]").addEventListener("click", () => {
-      if (confirm("学習記録をすべて消しますか？ この操作は元に戻せません。")) { ProgressStore.reset(); notebook.close(); renderHome(); showToast("学習記録を消しました"); }
+      if (confirm("学習記録をすべて消しますか？ この操作は元に戻せません。")) { ProgressStore.reset(); notebook.close(); renderHome("problems"); showToast("学習記録を消しました"); }
     });
   }
 
@@ -370,7 +382,8 @@
   notebook.addEventListener("click", event => { if (event.target === notebook) notebook.close(); });
 
   const hash = location.hash.replace(/^#/, "");
-  const [unitId, phase] = hash.split("/");
-  if (window.SCIENCE_UNIT_DATA[unitId] && phaseMeta[phase]) openUnit(unitId, phase);
-  else renderHome();
+  const [first, second] = hash.split("/");
+  if (first === "sim" && window.SCIENCE_UNIT_DATA[second]) openSimulation(second);
+  else if (window.SCIENCE_UNIT_DATA[first] && phaseMeta[second]) openUnit(first, second);
+  else renderHome(first === "home" && second === "problems" ? "problems" : "simulation");
 })();

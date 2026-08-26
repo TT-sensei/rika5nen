@@ -241,3 +241,79 @@ button.unit-card:hover { transform: translateY(-4px); border-color: var(--green-
 
 .research-panel{margin:0 0 1rem;padding:1rem;border:1px solid #9cd4c3;border-radius:18px;background:#f9fffe;display:grid;grid-template-columns:1fr auto;gap:.45rem 1rem;align-items:center}.research-kicker{display:block;color:var(--main);font-weight:800;font-size:.76rem}.research-panel b{display:block;font-size:1.08rem}.research-panel small,.discovery-card small{color:var(--muted)}.research-meter{height:10px;background:#dcebed;border-radius:999px;overflow:hidden}.research-meter span{display:block;height:100%;background:linear-gradient(90deg,var(--main),#e7ae33);border-radius:inherit}.research-panel button{grid-column:2;grid-row:1/4;border:0;border-radius:12px;background:var(--ink);color:#fff;padding:12px;cursor:pointer;font-weight:800}.catalog-page{background:var(--paper);border-radius:20px;padding:clamp(22px,4vw,38px);box-shadow:var(--shadow)}.catalog-page h1{margin:.2rem 0}.discovery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.discovery-card{min-height:145px;padding:15px;border:1px solid var(--line);border-radius:16px;background:#fff;display:flex;flex-direction:column;gap:7px}.discovery-card span{font-size:1.6rem}.discovery-badge{width:82px;height:82px;object-fit:contain;align-self:flex-start}.discovery-card.found .discovery-badge{filter:drop-shadow(0 5px 5px rgba(13,44,52,.15))}.discovery-card.hidden{background:repeating-linear-gradient(135deg,#edf3f5,#edf3f5 9px,#e5edef 9px,#e5edef 18px);color:#6d7d81}.science-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:rgba(13,44,52,.62)}.science-pop{width:min(420px,100%);text-align:center;padding:30px 24px;border-radius:24px;background:#fffdf8;box-shadow:0 22px 70px rgba(0,0,0,.3)}.science-pop p{margin:0;color:var(--main);font-weight:900}.science-pop h2{margin:10px 0;font-size:1.7rem}.science-pop div{padding:14px;border-radius:13px;background:var(--pale);line-height:1.65}.science-pop button{margin-top:18px;min-height:48px;border:0;border-radius:12px;background:var(--main);color:#fff;padding:0 28px;font-weight:800;cursor:pointer}.science-overlay.major .science-pop{border:5px solid #e7ae33}@media(max-width:620px){.research-panel{grid-template-columns:1fr}.research-panel button{grid-column:auto;grid-row:auto}.discovery-grid{grid-template-columns:repeat(2,1fr)}}
 :root{--main:var(--green-600);--dark:var(--green-950);--pale:var(--green-100)}
+
+/* 入口は「選ぶ場所」として小さく、シミュレーターは横画面1画面を優先する。 */
+.home-page{padding-top:14px}
+.home-dashboard-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:16px 20px;color:#fff;background:var(--green-950);border-radius:18px;box-shadow:var(--shadow)}
+.home-dashboard-head h1{margin:.2rem 0 0;font-size:clamp(1.35rem,3vw,2rem)}
+.home-dashboard-head p{margin:.25rem 0 0;color:#cfe0da;font-size:.82rem}
+.home-count{padding:.42rem .7rem;color:#5b4100;background:var(--yellow);border-radius:999px;font-size:.75rem;font-weight:900;white-space:nowrap}
+.home-mode-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+.home-mode-tabs button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:9px;align-items:center;min-height:58px;padding:9px 13px;text-align:left;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:13px;cursor:pointer}
+.home-mode-tabs button>span{grid-row:1/3;display:grid;place-items:center;width:34px;height:34px;background:#eef5f1;border-radius:10px;font-size:1.1rem}
+.home-mode-tabs button b{color:var(--ink);font-size:.9rem}
+.home-mode-tabs button small{margin-top:2px;font-size:.68rem}
+.home-mode-tabs button.active{border:2px solid var(--green-600);background:#f6fcf8;box-shadow:0 5px 16px rgba(42,128,104,.1)}
+.compact-heading{margin:14px 0 8px}
+.compact-heading h2{font-size:1.2rem}
+.compact-heading p{font-size:.72rem}
+.home-page .research-panel{margin:8px 0;padding:8px 11px;border-radius:12px;grid-template-columns:1fr auto;gap:.25rem .8rem}
+.home-page .research-panel b{font-size:.9rem}
+.home-page .research-panel button{padding:8px;font-size:.72rem}
+.home-page .unit-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.home-page .unit-card{min-height:154px;padding:11px;border-radius:14px}
+.home-page .unit-card:hover{transform:translateY(-2px)}
+.home-page .unit-icon{width:35px;height:35px;border-radius:10px}
+.home-page .unit-icon svg{width:22px;height:22px}
+.home-page .unit-card h3{margin:.65rem 0 .25rem;font-size:.82rem;line-height:1.35}
+.home-page .unit-card h3 small{font-size:.65rem}
+.home-page .unit-card p{font-size:.66rem;line-height:1.4}
+.home-page .status-badge,.home-page .sim-card-label{padding:.25rem .4rem;font-size:.57rem}
+.home-page .card-progress{padding-top:.55rem}
+.home-page .progress-bar{height:4px}
+.home-page .progress-label{margin-top:.25rem;font-size:.58rem}
+.simulation-card{position:relative}
+.simulation-card .sim-card-label{color:#17634e;background:#e1f3e9;border-radius:999px;font-weight:900}
+.simulation-card-action{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px;color:var(--unit-color,var(--green-600));font-size:.68rem;font-weight:900}
+.simulation-card-action b{font-size:1rem}
+
+.simulator-page{width:min(1400px,calc(100% - 28px));margin:0 auto;padding:8px 0 12px}
+.simulator-head{position:relative;min-height:70px;padding:0 3px 7px}
+.sim-back{display:inline-flex;align-items:center;min-height:27px;padding:0 7px;color:var(--muted);background:transparent;border:0;border-radius:7px;cursor:pointer;font-size:.72rem}
+.sim-back:hover{background:#edf5f0}
+.simulator-head h1{margin:2px 0 0;font-size:clamp(1.25rem,2.4vw,1.85rem)}
+.simulator-head p{margin:2px 0 0;color:var(--muted);font-size:.7rem}
+.sim-kicker{display:block;color:var(--sim-accent,var(--green-600));font-size:.58rem;font-weight:900;letter-spacing:.13em}
+.sim-workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:9px;height:min(600px,calc(100dvh - 178px));min-height:370px}
+.sim-stage-card,.sim-controls{min-height:0;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 8px 24px rgba(20,55,46,.06)}
+.sim-stage-card{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;padding:9px}
+.sim-stage-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:1px 4px 5px}
+.sim-stage-head h2{margin:2px 0 0;font-size:.96rem}
+.sim-live{padding:4px 7px;color:#167251;background:#e4f5eb;border-radius:999px;font-size:.61rem;font-weight:900;white-space:nowrap}
+.sim-visual{min-height:0;overflow:hidden;background:linear-gradient(145deg,#f5fbf7,#f8fbfa);border-radius:11px}
+.sim-visual svg{display:block;width:100%;height:100%;min-height:210px;max-height:330px}
+.sim-result-card{margin-top:6px;padding:7px 10px;background:#f6fbf8;border-left:4px solid var(--sim-accent,var(--green-600));border-radius:9px}
+.sim-result-label{color:var(--sim-accent,var(--green-600));font-size:.56rem;font-weight:900;letter-spacing:.13em}
+.sim-result-card h3{margin:1px 0 0;font-size:.88rem}
+.sim-result-card p{margin:2px 0 0;color:var(--muted);font-size:.67rem;line-height:1.35}
+.sim-metrics{display:flex;gap:5px;margin-top:5px}
+.sim-metric{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0;padding:3px 6px;background:#fff;border:1px solid #dcebe3;border-radius:6px}
+.sim-metric small{color:var(--muted);font-size:.55rem;white-space:nowrap}.sim-metric b{font-size:.68rem;white-space:nowrap}
+.sim-stage-actions{display:flex;justify-content:flex-end;gap:6px;padding:6px 0 0}
+.sim-stage-actions button{min-height:31px;padding:0 10px;border-radius:8px;font-size:.67rem;font-weight:900;cursor:pointer}
+.sim-primary{color:#fff;background:var(--green-800);border:1px solid var(--green-800)}.sim-secondary{color:var(--green-800);background:#fff;border:1px solid #65a890}
+.sim-controls{padding:10px 11px;overflow:auto}
+.sim-controls-head{padding:0 2px 6px;border-bottom:1px dashed var(--line)}
+.sim-controls-head h2{margin:2px 0 0;font-size:1.03rem}.sim-controls-head p{margin:3px 0 0;color:var(--muted);font-size:.64rem;line-height:1.35}
+.sim-control-section{margin-top:7px;padding:7px 8px;background:#f8fbf9;border:1px solid #e0ebe5;border-radius:10px}
+.sim-control-section h3{margin:0 0 5px;color:var(--green-800);font-size:.72rem}
+.sim-choice{margin:5px 0}.sim-choice>span,.sim-range>span{display:flex;justify-content:space-between;gap:5px;color:var(--muted);font-size:.63rem}.sim-choice>span{margin-bottom:3px}.sim-choice>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:3px}
+.sim-choice button{min-height:28px;padding:2px 4px;color:var(--ink);background:#fff;border:1px solid #d7e4dd;border-radius:6px;cursor:pointer;font-size:.61rem;font-weight:800}.sim-choice button.active{color:#fff;background:var(--sim-accent,var(--green-600));border-color:var(--sim-accent,var(--green-600))}
+.sim-range{display:block;margin:6px 0}.sim-range strong{color:var(--ink);font-size:.66rem}.sim-range output{font-weight:900}.sim-range input{display:block;width:100%;height:18px;accent-color:var(--sim-accent,var(--green-600));cursor:pointer}
+.sim-wide-button{width:100%;min-height:30px;margin-top:5px;color:var(--green-800);background:#fff;border:1px solid #65a890;border-radius:7px;cursor:pointer;font-size:.65rem;font-weight:900}
+.sim-presets{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}.sim-presets>span{color:var(--muted);font-size:.63rem;font-weight:900}.sim-presets>div{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:4px}.sim-presets button{min-height:27px;padding:2px 3px;color:var(--green-800);background:#eef7f2;border:1px solid #cfe4d8;border-radius:6px;cursor:pointer;font-size:.58rem;font-weight:800}
+.sim-ground{fill:#d3b17b}.sim-root{fill:none;stroke:#8b6547;stroke-width:4;stroke-linecap:round}.sim-stem{fill:none;stroke:#31865b;stroke-width:7;stroke-linecap:round}.sim-leaf{fill:#66b879;stroke:#27734c;stroke-width:2}.sim-leaf-alt{fill:#91ce77}.sim-seed{fill:#b48a52;stroke:#754e2f;stroke-width:2}.sim-flower{fill:#f4c452;stroke:#ae771b;stroke-width:2}.sim-flower-petal{fill:#f39aa9;stroke:#b95f76;stroke-width:2}.sim-center{fill:#f2bd43}.sim-fruit{fill:#e9794d;stroke:#a9482f;stroke-width:3}.sim-svg-label{fill:#214238;font-size:18px;font-weight:900}.sim-svg-small{fill:#527066;font-size:14px}.sim-water{fill:#d9f3fb;stroke:#65adc0;stroke-width:4}.sim-egg{fill:#fff2af;stroke:#d49e4b;stroke-width:3}.sim-fish,.sim-fish-tail{fill:#78b7cf;stroke:#337d99;stroke-width:3}.sim-eye{fill:#173f50}.sim-womb{fill:#f9ccd3;stroke:#bf7182;stroke-width:4}.sim-baby-head,.sim-baby-body{fill:#eab2a1;stroke:#a56761;stroke-width:3}.sim-sky{fill:#dff1fb;stroke:#6aa9c7;stroke-width:3}.sim-sun{fill:#f4c452}.sim-cloud{fill:#fff;stroke:#98b8c4;stroke-width:3}.sim-map-arrow{fill:none;stroke:#528fa4;stroke-width:4;stroke-linecap:round}.sim-land{fill:#e5eed4;stroke:#8bab79;stroke-width:3}.sim-river-bed{fill:none;stroke:#b39468;stroke-width:72;stroke-linecap:round}.sim-river-flow{fill:none;stroke:#73c4de;stroke-linecap:round;stroke-dasharray:12 8}.sim-particles circle{fill:#94734e}.sim-glass{fill:#ffffffaa;stroke:#6996a0;stroke-width:4}.sim-liquid{fill:#a6dfea;opacity:.78}.sim-sediment{fill:#b78b5b}.sim-core{fill:#9aa5aa;stroke:#536168;stroke-width:3}.sim-coil path{fill:none;stroke:#d66b48;stroke-width:7;stroke-linecap:round}.sim-pole{stroke:#536168;stroke-width:5}.sim-pole-label{fill:#bd4f43;font-size:23px;font-weight:900}.sim-clips circle{fill:#f0bd4e;stroke:#9c7620;stroke-width:3}.sim-ceiling{stroke:#4e6964;stroke-width:8;stroke-linecap:round}.sim-pivot{fill:#4e6964}.sim-string{stroke:#536168;stroke-width:4}.sim-bob{fill:#e8794b;stroke:#9b462d;stroke-width:3}.sim-arc{fill:none;stroke:#9dc3b0;stroke-width:2;stroke-dasharray:7 7}
+
+@media (min-width:761px) and (max-width:1100px){.home-page .unit-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.sim-workspace{grid-template-columns:minmax(0,1fr) 285px}}
+@media (min-width:761px) and (max-height:700px){.simulator-head p{display:none}.simulator-head{min-height:56px}.sim-workspace{height:min(560px,calc(100dvh - 145px));min-height:330px}.sim-result-card p{display:none}.sim-controls-head p{display:none}}
+@media (max-width:760px){.home-page{padding-top:8px}.home-dashboard-head{padding:13px 15px}.home-dashboard-head p{font-size:.7rem}.home-page .unit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.home-page .unit-card{min-height:150px;padding:10px}.home-page .unit-card h3{font-size:.76rem}.home-page .unit-card p{font-size:.62rem}.home-mode-tabs button{padding:8px 9px}.home-mode-tabs button b{font-size:.78rem}.home-mode-tabs button small{font-size:.61rem}.simulator-page{width:calc(100% - 16px);padding-top:5px}.simulator-head h1{font-size:1.25rem}.sim-workspace{display:flex;height:auto;min-height:0;flex-direction:column}.sim-stage-card{min-height:430px}.sim-visual{min-height:245px}.sim-controls{overflow:visible}.sim-stage-actions{justify-content:stretch}.sim-stage-actions button{flex:1}.sim-metrics{overflow:auto}.sim-metric{flex:0 0 auto}.sim-presets>div{grid-template-columns:repeat(3,1fr)}}
