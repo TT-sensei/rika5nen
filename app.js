@@ -30,6 +30,8 @@
   }
 
   function renderHome(tab) {
+    window.RikaFiveLabRouter?.leave?.();
+    document.body.classList.remove("has-simulation");
     view = { page: "home", unitId: null, phase: "knowledge", homeTab: tab || view.homeTab || "simulation" };
     const simulation = view.homeTab === "simulation";
     const units = window.SCIENCE_UNITS || [];
@@ -39,13 +41,13 @@
           <div><span class="eyebrow">SCIENCE LABORATORY / GRADE 5</span><h1>理科ラボ5</h1><p>条件を動かして、現象の変化を見つけよう。</p></div>
           <span class="home-count">${units.length}単元</span>
         </section>
-        <nav class="home-mode-tabs" aria-label="学習モード">
-          <button type="button" data-home-tab="simulation" class="${simulation ? "active" : ""}"><span>🔬</span><b>シミュレーション</b><small>条件を変えてすぐ試す</small></button>
-          <button type="button" data-home-tab="problems" class="${!simulation ? "active" : ""}"><span>📝</span><b>問題を解く</b><small>知識・実験・考察を学ぶ</small></button>
+        <nav class="home-mode-tabs" role="tablist" aria-label="学習モード">
+          <button type="button" role="tab" aria-selected="${simulation}" data-home-tab="simulation" class="${simulation ? "active" : ""}"><span>🔬</span><b>シミュレーション</b><small>条件を変えてすぐ試す</small></button>
+          <button type="button" role="tab" aria-selected="${!simulation}" data-home-tab="problems" class="${!simulation ? "active" : ""}"><span>📝</span><b>問題を解く</b><small>知識・実験・考察を学ぶ</small></button>
         </nav>
         ${!simulation && window.ScienceGame ? window.ScienceGame.panel() : ""}
         <div class="section-heading compact-heading"><div><span class="eyebrow">${simulation ? "TRY THE MODEL" : "LEARN THE UNIT"}</span><h2>${simulation ? "試したい単元を選ぼう" : "学びたい単元を選ぼう"}</h2></div><p>${simulation ? "操作すると図と結果がすぐ変わります" : "学習記録はこの端末に保存されます"}</p></div>
-        <section class="unit-grid ${simulation ? "simulation-grid" : "problem-grid"}" aria-label="単元一覧">
+        <section class="unit-grid ${simulation ? "simulation-grid" : "problem-grid"}" role="tabpanel" aria-label="${simulation ? "シミュレーション" : "問題"}の単元一覧">
           ${units.map(unit => simulation ? renderSimulationCard(unit) : renderUnitCard(unit)).join("")}
         </section>
       </div>`;
@@ -84,6 +86,8 @@
 
   function openUnit(id, phase) {
     if (!window.SCIENCE_UNIT_DATA[id]) return;
+    window.RikaFiveLabRouter?.leave?.();
+    document.body.classList.remove("has-simulation");
     view = { page: "unit", unitId: id, phase: phase || view.phase || "knowledge", homeTab: "problems" };
     currentSelections = {};
     renderUnit();
@@ -91,15 +95,20 @@
   }
 
   function openSimulation(id) {
-    if (!window.SCIENCE_UNIT_DATA[id] || !window.ScienceSim) return;
+    if (!window.SCIENCE_UNIT_DATA[id] || !window.RikaFiveLabRouter) return;
+    window.RikaFiveLabRouter.leave?.();
     view = { page: "simulation", unitId: id, phase: "knowledge", homeTab: "simulation" };
     currentSelections = {};
-    app.innerHTML = window.ScienceSim.render(id);
-    const root = app.querySelector("[data-sim-unit]");
-    window.ScienceSim.bind(root);
-    root.querySelector("[data-sim-home]")?.addEventListener("click", () => renderHome("simulation"));
+    document.body.classList.add("has-simulation");
+    app.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">⌛</span><h1>LABを準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
     window.scrollTo({ top: 0, behavior: "smooth" });
     history.replaceState(null, "", `#sim/${id}`);
+    window.RikaFiveLabRouter.render(id, app, { onHome: () => renderHome("simulation") }).catch(error => {
+      console.error(error);
+      document.body.classList.remove("has-simulation");
+      app.innerHTML = `<section class="empty-state lab-error"><h1>LABを読み込めませんでした</h1><p>画面を更新して、もう一度試してください。</p><button class="primary-button" type="button" data-sim-error-home>シミュレーション一覧へ</button></section>`;
+      app.querySelector("[data-sim-error-home]")?.addEventListener("click", () => renderHome("simulation"));
+    });
   }
 
   function renderUnit() {
@@ -376,7 +385,7 @@
   }
 
   document.getElementById("home-button").addEventListener("click", renderHome);
-  document.getElementById("discovery-button").addEventListener("click", () => { app.innerHTML = window.ScienceGame?.catalog() || ""; app.querySelector("[data-home]")?.addEventListener("click", renderHome); });
+  document.getElementById("discovery-button").addEventListener("click", () => { window.RikaFiveLabRouter?.leave?.(); document.body.classList.remove("has-simulation"); app.innerHTML = window.ScienceGame?.catalog() || ""; app.querySelector("[data-home]")?.addEventListener("click", renderHome); });
   document.getElementById("notebook-button").addEventListener("click", () => { renderNotebook(); notebook.showModal(); });
   notebook.querySelector(".dialog-close").addEventListener("click", () => notebook.close());
   notebook.addEventListener("click", event => { if (event.target === notebook) notebook.close(); });
