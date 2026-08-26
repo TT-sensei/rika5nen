@@ -20,6 +20,7 @@
     <div class="header-actions">
       <button id="discovery-button" class="icon-button header-button lab-header-button" type="button" aria-label="発見図鑑を開く">LAB</button>
       <button id="notebook-button" class="icon-button header-button" type="button" aria-label="学習記録を開く">まとめチェック</button>
+      <button id="settings-button" class="icon-button header-button" type="button" aria-label="設定を開く">⚙</button>
     </div>
   </header>
 
@@ -31,6 +32,14 @@
       <button class="dialog-close" type="button" aria-label="閉じる">×</button>
     </div>
     <div id="notebook-content"></div>
+  </dialog>
+
+  <dialog id="settings-dialog" class="settings-dialog">
+    <form method="dialog">
+      <div class="dialog-head"><h2>設定</h2><button class="icon-button" value="cancel" aria-label="閉じる">×</button></div>
+      <p>学習記録は、この端末のブラウザ内だけに保存されます。</p>
+      <button id="reset-button" class="danger-button" type="button">学習記録をすべて消す</button>
+    </form>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
