@@ -12,7 +12,7 @@
   }
 
   function pendulumSvg(state, result) {
-    const angle = state.measuring ? 0 : Math.sin(Date.now() / 430) * state.amplitude;
+    const angle = state.measuring ? Math.sin(Date.now() / 430) * state.amplitude : -state.amplitude;
     return `<svg class="pendulum-sim-svg" viewBox="0 0 760 360" role="img" aria-label="ふりこの長さや重さや振れ幅を変えるシミュレーション"><rect width="760" height="360" fill="#f3effb"/><path class="pendulum-frame" d="M270 52h220M300 52v35M460 52v35"/><path class="pendulum-string" d="M380 70v${210 - Math.min(100, state.length)}" transform="rotate(${angle} 380 70)"/><circle class="pendulum-bob" cx="380" cy="${280 - Math.min(100, state.length)}" r="${18 + state.weight / 25}" transform="rotate(${angle} 380 70)"/><path class="angle-guide" d="M300 90q80 55 160 0"/><text class="pendulum-title" x="380" y="34" text-anchor="middle">ふりこの動き</text><text class="pendulum-label" x="380" y="328" text-anchor="middle">長さ ${state.length}cm　・　おもり ${state.weight}g　・　振れ幅 ${state.amplitude}°</text></svg>`;
   }
 

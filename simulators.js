@@ -27,6 +27,7 @@
           <section class="simulation-column" aria-label="シミュレーション">
             <div class="sim-stage" data-sim-stage></div>
             <div class="sim-readout" data-sim-readout aria-live="polite"></div>
+            <div class="sim-comparison" data-sim-comparison hidden></div>
             <div class="sim-actions" data-sim-actions></div>
           </section>
           <aside class="control-panel instant-panel" aria-label="条件操作">
@@ -46,10 +47,11 @@
     };
     view.querySelectorAll("[data-lab-home]").forEach(button => on(button, "click", () => onHome?.()));
 
-    return {
+    const ui = {
       root: view,
       stage: view.querySelector("[data-sim-stage]"),
       readout: view.querySelector("[data-sim-readout]"),
+      comparison: view.querySelector("[data-sim-comparison]"),
       actions: view.querySelector("[data-sim-actions]"),
       panel: view.querySelector("[data-control-panel]"),
       note: view.querySelector("[data-model-note]"),
@@ -59,6 +61,46 @@
         view.remove();
       }
     };
+    enableComparison(ui);
+    return ui;
+  }
+
+  function conditionSummary(panel) {
+    const ranges = [...panel.querySelectorAll(".range-control > span")].map(row => row.textContent.trim());
+    const choices = [...panel.querySelectorAll(".segmented-control")].map(group => {
+      const label = group.querySelector(":scope > span")?.textContent.trim();
+      const selected = group.querySelector("button[aria-pressed='true']")?.textContent.trim();
+      return label && selected ? `${label}：${selected}` : "";
+    });
+    return [...ranges, ...choices].filter(Boolean).join(" ／ ");
+  }
+
+  function enableComparison(ui) {
+    let saved = null;
+    const saveButton = action(ui.actions, "この結果をAに保存", () => {
+      saved = snapshot();
+      saveButton.textContent = "いまの結果をAに保存し直す";
+      ui.comparison.hidden = false;
+      update();
+    }, "compare-button");
+
+    const snapshot = () => ({
+      conditions: conditionSummary(ui.panel),
+      metrics: ui.readout.querySelector(".instant-readout-grid")?.innerHTML || ""
+    });
+    const card = (label, data, current = false) => `<section class="comparison-card${current ? " is-current" : ""}"><strong>${label}</strong><p>${esc(data.conditions || "条件を操作して結果を確かめよう")}</p><div class="comparison-metrics">${data.metrics}</div></section>`;
+    const update = () => {
+      if (!saved) return;
+      ui.comparison.innerHTML = `<div class="comparison-head"><b>AとBをくらべる</b><span>条件を1つ変えると、結果の違いが見つけやすいよ</span><button type="button" data-compare-clear>閉じる</button></div><div class="comparison-grid">${card("A 保存した結果", saved)}${card("B いまの結果", snapshot(), true)}</div>`;
+    };
+    ui.readout._labCompareUpdate = update;
+    ui.on(ui.comparison, "click", event => {
+      if (!event.target.closest("[data-compare-clear]")) return;
+      saved = null;
+      ui.comparison.hidden = true;
+      ui.comparison.innerHTML = "";
+      saveButton.textContent = "この結果をAに保存";
+    });
   }
 
   function section(parent, title, hint = "") {
@@ -118,6 +160,7 @@
 
   function renderReadout(target, { metrics = [], message = "", note = "" } = {}) {
     target.innerHTML = `<div class="instant-readout-grid">${metrics.map(metric => `<div class="instant-metric"><span>${esc(metric.label)}</span><b>${esc(metric.value)}</b>${metric.detail ? `<small>${esc(metric.detail)}</small>` : ""}</div>`).join("")}</div><div class="instant-result"><strong>結果</strong><p>${esc(message)}</p></div>${note ? `<p class="instant-note">${esc(note)}</p>` : ""}`;
+    target._labCompareUpdate?.();
   }
 
   function renderError(root, message) {
@@ -645,7 +688,7 @@
   }
 
   function pendulumSvg(state, result) {
-    const angle = state.measuring ? 0 : Math.sin(Date.now() / 430) * state.amplitude;
+    const angle = state.measuring ? Math.sin(Date.now() / 430) * state.amplitude : -state.amplitude;
     return `<svg class="pendulum-sim-svg" viewBox="0 0 760 360" role="img" aria-label="ふりこの長さや重さや振れ幅を変えるシミュレーション"><rect width="760" height="360" fill="#f3effb"/><path class="pendulum-frame" d="M270 52h220M300 52v35M460 52v35"/><path class="pendulum-string" d="M380 70v${210 - Math.min(100, state.length)}" transform="rotate(${angle} 380 70)"/><circle class="pendulum-bob" cx="380" cy="${280 - Math.min(100, state.length)}" r="${18 + state.weight / 25}" transform="rotate(${angle} 380 70)"/><path class="angle-guide" d="M300 90q80 55 160 0"/><text class="pendulum-title" x="380" y="34" text-anchor="middle">ふりこの動き</text><text class="pendulum-label" x="380" y="328" text-anchor="middle">長さ ${state.length}cm　・　おもり ${state.weight}g　・　振れ幅 ${state.amplitude}°</text></svg>`;
   }
 
