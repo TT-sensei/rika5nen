@@ -350,3 +350,9 @@ button.unit-card:hover { transform: translateY(-4px); border-color: var(--green-
 .settings-dialog .dialog-head .icon-button{min-width:40px;min-height:40px;padding:.35rem .65rem}
 .settings-dialog p{line-height:1.7;color:var(--muted)}
 .danger-button{width:100%;min-height:48px;padding:.7rem 1rem;color:#8b332c;background:#fff0ef;border:2px solid #e2aaa3;border-radius:12px;cursor:pointer;font-weight:850}
+
+/* Grade theme: 5th grade / fresh green */
+:root{--ink:#173d2b;--muted:#5e7868;--paper:#fbfdf7;--green-950:#174b32;--green-800:#23724b;--green-600:#41a866;--green-100:#e3f6e8;--line:#cfe5d4;--shadow:0 16px 40px rgba(23,75,50,.12)}
+body{background:radial-gradient(circle at 90% 0,#d7f2df 0,transparent 30rem),var(--paper)}
+.site-header{background:rgba(23,75,50,.96)}
+.hero{background:var(--green-950)}
