@@ -21,7 +21,7 @@ rika5nen/
 ├── index.html
 ├── styles.css
 ├── app.js                 # 入口・問題学習の画面
-├── simulators.js          # 旧シミュレーターAPI（互換用に保持）
+├── simulators.js          # GitHub Pages用のLAB実行バンドル
 ├── labs/
 │   ├── index.js           # LAB一覧と遅延読み込み
 │   ├── lab-core.js        # 共通シェル・操作・結果表示・エラー処理
@@ -55,7 +55,8 @@ rika5nen/
 2. `index.html` でそのファイルを `app.js` より先に読み込む。
 3. `catalog.js` に単元カードを追加する。
 4. `labs/index.js` に現行単元IDのマニフェストを追加し、対応する `labs/*-lab.js` に初期条件、操作、図、結果を追加する。
-5. 問題学習のデータを `knowledge / preparation / consideration` の3区分で登録する。
+5. `simulators.js` の実行バンドルにも同じ `labs/` モジュールを反映する。
+6. 問題学習のデータを `knowledge / preparation / consideration` の3区分で登録する。
 
 問題学習の共通ロジックは `app.js`、LABの共通ロジックは `labs/lab-core.js` にまとめています。既存の問題データ・答え合わせ・進捗保存を残したまま、単元別LABだけを独立して拡張できます。
 
