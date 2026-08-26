@@ -20,10 +20,11 @@
     const n = unlocked();
     const scienceHtml = science.map((x,i) => img(BASE+"badges/science/"+x[0]+"/badge.webp", "理科｜"+x[1], i >= Math.min(n, science.length))).join("");
     const elementHtml = elements.map((x,i) => img(BASE+"elements/"+x+"/level-"+((i%3)+1)+"/badge.webp", "エレメント｜"+x.toUpperCase(), i+science.length >= n)).join("");
-    const collectionBadge = {music:"music-note"};
-    const collectionLabels = {music:"音"};
-    const collectionHtml = collections.map(x => { const item = collectionBadge[x] || "badge"; const file = x === "space" ? item : item + "/badge.webp"; const label = collectionLabels[x] || x.toUpperCase(); return "<div class=\"asset-card asset-link\"><img class=\"discovery-badge\" src=\"" + BASE + "collections/" + x + "/common/" + file + "\" alt=\"コレクション｜" + label + "\" loading=\"lazy\"><b>コレクション｜"+label+"</b><small>軽量版バッジを見る</small></div>"; }).join("");
-    return "<section class=\"asset-page\"><button class=\"text-button\" data-assets-home>単元一覧へ</button><p class=\"eyebrow\">SCIENCE ASSET BOOK</p><h1>理科のおまけ図鑑</h1><p>理科の学びにぴったりなバッジを中心に、エレメントやコレクションも集めよう。解放数："+n+"</p><h2>理科バッジ</h2><div class=\"asset-grid\">"+scienceHtml+"</div><h2>エレメント</h2><div class=\"asset-grid\">"+elementHtml+"</div><h2>コレクション</h2><div class=\"asset-grid\">"+collectionHtml+"</div></section>";
+    const collectionSeries = "music";
+    const collectionLabel = "音";
+    const collectionBadges = [{rarity:"common",id:"drum",label:"太鼓"},{rarity:"common",id:"guitar-pick",label:"ギターピック"},{rarity:"common",id:"maracas",label:"マラカス"},{rarity:"common",id:"microphone",label:"マイク"},{rarity:"common",id:"music-note",label:"音符"},{rarity:"common",id:"piano-keys",label:"ピアノ"},{rarity:"common",id:"trumpet",label:"トランペット"},{rarity:"common",id:"vinyl-record",label:"レコード"},{rarity:"rare",id:"dj-turntable",label:"DJターンテーブル"},{rarity:"rare",id:"electric-guitar",label:"エレキギター"},{rarity:"rare",id:"saxophone",label:"サックス"},{rarity:"rare",id:"taiko",label:"和太鼓"},{rarity:"super-rare",id:"grand-piano",label:"グランドピアノ"},{rarity:"super-rare",id:"rhythm-core",label:"リズムコア"},{rarity:"secret",id:"cosmic-symphony",label:"宇宙のシンフォニー"}];
+    const collectionHtml = collectionBadges.map((badge,i) => img(BASE+"collections/"+collectionSeries+"/"+badge.rarity+"/"+badge.id+"/badge.webp", "コレクション｜"+badge.label, i >= Math.min(n, collectionBadges.length))).join("");
+    return "<section class=\"asset-page\"><button class=\"text-button\" data-assets-home>単元一覧へ</button><p class=\"eyebrow\">SCIENCE ASSET BOOK</p><h1>理科のおまけ図鑑</h1><p>理科の学びにぴったりなバッジを中心に、エレメントやコレクションも集めよう。解放数："+n+"</p><h2>理科バッジ</h2><div class=\"asset-grid\">"+scienceHtml+"</div><h2>エレメント</h2><div class=\"asset-grid\">"+elementHtml+"</div><h2>コレクション｜"+collectionLabel+"</h2><div class=\"asset-grid\">"+collectionHtml+"</div></section>";
   }
   if (!window.ScienceGame) return;
   const originalPanel = window.ScienceGame.panel;
