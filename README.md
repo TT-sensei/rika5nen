@@ -54,19 +54,19 @@
 rika5nen/
 ├── index.html
 ├── styles.css
-├── app.js                   # 現在のGitHub Pages用エントリ
-├── catalog.js               # 7単元の一覧
-├── plants.js                # 植物の問題データ
-├── animals.js               # メダカ・人の問題データ
-├── weather.js               # 天気の問題データ
-├── river.js                 # 流れる水の問題データ
-├── solutions.js             # 物のとけ方の問題データ
-├── electromagnet.js         # 電磁石の問題データ
-├── pendulum.js              # ふりこの問題データ
-├── storage.js               # 進捗保存
-├── gamification.js          # 発見・報酬
-├── asset-rewards.js         # コレクション表示
-├── extras.js                # 問題データの補助処理
+├── app.js
+├── catalog.js
+├── plants.js
+├── animals.js
+├── weather.js
+├── river.js
+├── solutions.js
+├── electromagnet.js
+├── pendulum.js
+├── storage.js
+├── gamification.js
+├── asset-rewards.js
+├── extras.js
 ├── labs/
 │   ├── index.js
 │   ├── lab-core.js
@@ -78,8 +78,8 @@ rika5nen/
 │   ├── electromagnet-lab.js
 │   ├── pendulum-lab.js
 │   └── labs.css
-├── simulators.js            # 互換用のLAB実行バンドル
-├── lab-runtime.js           # LAB実行バンドル
+├── simulators.js
+├── lab-runtime.js
 └── README.md
 ~~~
 
@@ -101,6 +101,20 @@ LABを修正・追加するときは、catalog.js、対応する問題データ�
 ## 公開方法
 
 GitHubの Settings → Pages で、main ブランチのルートを公開元に設定します。ビルド処理は不要です。
+
+## ライセンス・利用について
+
+学校・家庭での学習目的で無料で利用できます。
+
+このリポジトリのコードおよびTT-senseiオリジナルの教材・画像を、許可なく有料教材、有料サービス、販売商品として利用することはできません。アプリを複製して別サービスとして販売すること、オリジナル素材を素材集として再配布・販売することも許可していません。
+
+外部ライブラリ、フォント、音源、画像、データ等の第三者素材には、それぞれの権利者・ライセンス・利用条件が適用されます。
+
+Software code and original educational content in this repository are licensed under the PolyForm Noncommercial License 1.0.0.
+
+https://polyformproject.org/licenses/noncommercial/1.0.0/
+
+Copyright © 2026 TT-sensei.
 
 ## 公開ページ
 
