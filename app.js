@@ -703,7 +703,7 @@
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
     let animationFrame = 0;
-    let countOptions;
+    let calculateButton;
     const animate = () => {
       if (!state.measuring) return;
       paint();
@@ -711,6 +711,7 @@
     };
     function paint() {
       const result = model(state);
+      if (calculateButton) calculateButton.textContent = `${state.count}往復の時間を計算`;
       ui.stage.innerHTML = pendulumSvg(state, result);
       let message;
       if (state.length !== DEFAULT.length) message = "ふりこの長さを長くすると、1往復する時間が長くなります。";
@@ -730,11 +731,11 @@
       core.range(conditions, { label: "おもりの重さ", min: 50, max: 200, step: 10, value: state.weight, format: value => `${value}g`, onInput: value => { state.weight = value; state.measured = 0; paint(); } });
       core.range(conditions, { label: "ふれ幅", min: 5, max: 30, value: state.amplitude, format: value => `${value}°`, onInput: value => { state.amplitude = value; state.measured = 0; paint(); } });
       const measure = core.section(ui.panel, "測る回数");
-      countOptions = core.options(measure, { label: "振る回数", values: [{ id: "1", label: "1往復" }, { id: "10", label: "10往復" }, { id: "20", label: "20往復" }], value: state.count, onChange: value => { state.count = Number(value); state.measured = 0; paint(); } });
+      core.options(measure, { label: "振る回数", values: [{ id: "1", label: "1往復" }, { id: "10", label: "10往復" }, { id: "20", label: "20往復" }], value: state.count, onChange: value => { state.count = Number(value); state.measured = 0; paint(); } });
       core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); buildControls(); paint(); });
     }
     buildControls();
-    core.action(ui.actions, "10往復の時間を計算", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = false; countOptions.set(10); cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
+    calculateButton = core.action(ui.actions, `${state.count}往復の時間を計算`, () => { const result = model(state); state.measured = result.total; state.measuring = false; cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
     core.action(ui.actions, "振らせる / 止める", () => { state.measuring = !state.measuring; paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); cancelAnimationFrame(animationFrame); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "ふりこの長さ・おもりの重さ・振れ幅を同時に変えず、一つずつ変化を確かめられるようにしています。";
