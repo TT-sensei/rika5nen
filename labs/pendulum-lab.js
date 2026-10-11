@@ -31,6 +31,12 @@
       paint();
       animationFrame = requestAnimationFrame(animate);
     };
+    function syncPhaseBeforeConditionChange() {
+      if (!state.measuring) return;
+      const previousPeriod = model(state).period;
+      state.phase += (Date.now() - state.phaseStartedAt) * 2 * Math.PI / (Math.max(0.1, previousPeriod) * 1000);
+      state.phaseStartedAt = Date.now();
+    }
     function paint() {
       const result = model(state);
       if (calculateButton) calculateButton.textContent = `${state.count}往復の時間を計算`;
@@ -49,9 +55,9 @@
     function buildControls() {
       ui.panel.innerHTML = "";
       const conditions = core.section(ui.panel, "ふりこの条件");
-      core.range(conditions, { label: "ふりこの長さ", min: 20, max: 100, step: 10, value: state.length, format: value => `${value}cm`, onInput: value => { state.length = value; state.measured = 0; paint(); } });
-      core.range(conditions, { label: "おもりの重さ", min: 50, max: 200, step: 10, value: state.weight, format: value => `${value}g`, onInput: value => { state.weight = value; state.measured = 0; paint(); } });
-      core.range(conditions, { label: "ふれ幅", min: 5, max: 30, value: state.amplitude, format: value => `${value}°`, onInput: value => { state.amplitude = value; state.measured = 0; paint(); } });
+      core.range(conditions, { label: "ふりこの長さ", min: 20, max: 100, step: 10, value: state.length, format: value => `${value}cm`, onInput: value => { syncPhaseBeforeConditionChange(); state.length = value; state.measured = 0; paint(); } });
+      core.range(conditions, { label: "おもりの重さ", min: 50, max: 200, step: 10, value: state.weight, format: value => `${value}g`, onInput: value => { syncPhaseBeforeConditionChange(); state.weight = value; state.measured = 0; paint(); } });
+      core.range(conditions, { label: "ふれ幅", min: 5, max: 30, value: state.amplitude, format: value => `${value}°`, onInput: value => { syncPhaseBeforeConditionChange(); state.amplitude = value; state.measured = 0; paint(); } });
       const measure = core.section(ui.panel, "測る回数");
       core.options(measure, { label: "振る回数", values: [{ id: "1", label: "1往復" }, { id: "10", label: "10往復" }, { id: "20", label: "20往復" }], value: state.count, onChange: value => { state.count = Number(value); state.measured = 0; paint(); } });
       core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); buildControls(); paint(); });
