@@ -129,9 +129,11 @@
 
     const snapshot = () => ({
       conditions: conditionSummary(ui.panel),
+      message: ui.readout.querySelector(".instant-result p")?.textContent.trim() || "",
+      note: ui.readout.querySelector(".instant-note")?.textContent.trim() || "",
       metrics: ui.readout.querySelector(".instant-readout-grid")?.innerHTML || ""
     });
-    const card = (label, data, current = false) => `<section class="comparison-card${current ? " is-current" : ""}"><strong>${label}</strong><p>${esc(data.conditions || "条件を操作して結果を確かめよう")}</p><div class="comparison-metrics">${data.metrics}</div></section>`;
+    const card = (label, data, current = false) => `<section class="comparison-card${current ? " is-current" : ""}"><strong>${label}</strong><p>${esc(data.conditions || "条件を操作して結果を確かめよう")}</p><p class="comparison-result">${esc(data.message || "結果を確かめよう")}</p>${data.note ? `<p class="comparison-note">${esc(data.note)}</p>` : ""}<div class="comparison-metrics">${data.metrics}</div></section>`;
     const update = () => {
       if (!saved) return;
       ui.comparison.innerHTML = `<div class="comparison-head"><b>AとBをくらべる</b><span>条件を1つ変えると、結果の違いが見つけやすいよ</span><button type="button" data-compare-clear>閉じる</button></div><div class="comparison-grid">${card("A 保存した結果", saved)}${card("B いまの結果", snapshot(), true)}</div>`;
