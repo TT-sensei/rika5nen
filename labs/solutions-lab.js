@@ -10,7 +10,9 @@
   }
   function solutionModel(state) {
     const max = capacity(state);
-    const speed = (state.temperature / 80 + (state.stirred ? .65 : .25)) * (state.time / 10) + .08;
+    // 経過0ではまだ物質がとけていない状態から始める。
+    // かき混ぜは、とける速さだけに影響し、溶解度(max)は変えない。
+    const speed = (state.temperature / 80 + (state.stirred ? .65 : .25)) * (state.time / 10);
     const dissolved = Math.min(state.amount, max, Math.round(max * Math.min(1, speed) * 10) / 10);
     return { max, dissolved, leftover: Math.max(0, Math.round((state.amount - dissolved) * 10) / 10), progress: max ? dissolved / Math.min(state.amount, max) : 0 };
   }
