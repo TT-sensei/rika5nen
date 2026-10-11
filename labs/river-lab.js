@@ -59,7 +59,7 @@
         { label: "けずる働き（指標）", value: `${result.erosion}/100` },
         { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
         { label: "たい積（指標）", value: `${result.deposition}/100` }
-      ], message, note: `経過時間：${state.time}分（流した回数の目安：${state.flow}回）　／　川幅：${state.width}` });
+      ], message, note: `経過時間：${state.time}分（流した回数の目安：${state.time > 0 ? Math.max(1, state.flow) : 0}回）　／　川幅：${state.width}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
