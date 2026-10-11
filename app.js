@@ -398,8 +398,8 @@
     const cells = !stage.hatched ? Array.from({ length: Math.max(1, Math.min(8, 1 + Math.floor(state.days * 1.2))) }, (_, i) => `<circle class="egg-cell" cx="${370 + Math.cos(i * 1.3) * 28}" cy="${175 + Math.sin(i * 1.3) * 28}" r="${state.days < 2 ? 25 - state.days * 7.5 : 10}" opacity="${Math.max(0, 1 - bodyProgress)}"/>`).join("") : "";
     const fry = stage.hatched ? `<path class="fry" d="M319 179c42-33 107-19 127 4-24 32-84 38-127 6l-45 18 23-27-13-31z"/><circle class="egg-eye" cx="407" cy="178" r="7"/>` : "";
     return `<svg class="egg-sim-svg" viewBox="0 0 760 360" role="img" aria-label="メダカの卵が成長するシミュレーション">
-      <rect width="760" height="360" fill="#eef8fb"/><path class="water-line" d="M0 78q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/><path class="water-line second" d="M0 306q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/>
-      ${!stage.hatched ? `<circle class="egg-shell" cx="380" cy="175" r="${eggR}"/><g transform="translate(380 175) scale(${scale}) translate(-380 -175)">${cells}${body}</g>` : `<g transform="translate(380 175) scale(${scale}) translate(-380 -175)">${fry}</g>`}
+      <rect width="760" height="360" fill="#eef8fb"/><defs><clipPath id="medaka-egg-window"><circle cx="380" cy="175" r="57"/></clipPath></defs><path class="water-line" d="M0 78q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/><path class="water-line second" d="M0 306q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/>
+      ${!stage.hatched ? `<circle class="egg-shell" cx="380" cy="175" r="${eggR}"/><g clip-path="url(#medaka-egg-window)"><g transform="translate(380 175) scale(${scale}) translate(-380 -175)">${cells}${body}</g></g>` : `<g transform="translate(380 175) scale(${scale}) translate(-380 -175)">${fry}</g>`}
       <text class="egg-title" x="380" y="42" text-anchor="middle">${stage.name}</text><text class="egg-caption" x="380" y="314" text-anchor="middle">${stage.detail}</text>
       ${stage.eyes ? `<text class="egg-callout" x="535" y="120">目が見える</text>` : ""}${stage.hatched ? `<text class="egg-callout" x="535" y="235">ふ化して稚魚に</text>` : ""}
     </svg>`;
@@ -413,7 +413,15 @@
     function paint() {
       const stage = stageFor(state.days);
       ui.stage.innerHTML = fishSvg(state, stage);
-      const message = stage.hatched ? "時間を進めると、卵の中の変化を経て、ふ化して稚魚になります。" : state.days < 2 ? "卵の中で細胞が増えていく様子を見てみよう。" : state.days < 4 ? "細胞の変化に加えて、体の形が少しずつ見えてきます。" : "目や体、尾の形がはっきりし、ふ化へ近づいていきます。";
+      const message = stage.hatched
+        ? "ふ化したね。日数を戻して、卵の中の細胞・目・体の変化と比べてみよう。"
+        : state.days < 2
+          ? "受精卵の中で細胞が分かれ始めるよ。1日ずつ進めて変化を探そう。"
+          : state.days < 4
+            ? "細胞だけだった卵に、体の形が少しずつ見えてきたね。倍率を変えて観察しよう。"
+            : state.days < 7
+              ? "目や体の形が見えてきたよ。日数を進めると、ふ化に近づくよ。"
+              : "ふ化が近づいているよ。1日進めたときの変化を見てみよう。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "経過", value: `${state.days}日` },
         { label: "観察", value: stage.name },
