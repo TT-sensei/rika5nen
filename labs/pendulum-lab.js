@@ -41,7 +41,7 @@
         { label: "1往復の時間", value: `${result.period}秒` },
         { label: `${state.count}往復の時間`, value: `${result.total}秒` },
         { label: "計算値", value: state.measured ? `${state.measured}秒` : "まだ計算していない" }
-      ], message, note: "測定は、同じ条件で同じ回数を比べるための目安です。" });
+      ], message, note: "表示される時間は、条件から求めた計算上の目安です。実際に振って測った時間ではありません。" });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
