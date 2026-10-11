@@ -96,7 +96,7 @@
     if (changedMetric) {
       const previous = before.find(old => old.label === changedMetric.label)?.value || "—";
       ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたよ。へぇ！ " + changedMetric.label + " が " + previous + " → " + changedMetric.value + " に変わった！";
-    } else { ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたよ。図や数値にどんな変化が出たか見てみよう！"; }
+    } else { ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたけれど、表示される数値は同じみたい。変わらない条件も発見だよ。図にも変化がないか比べてみよう！"; }
   }
 
   function conditionSummary(panel) {
@@ -203,6 +203,7 @@
 
   window.RikaFiveLabCore = { esc, shell, section, range, options, action, presets, renderReadout, renderError };
 })();
+
 /* --- labs/plants-lab.js --- */
 (() => {
   "use strict";
@@ -217,8 +218,11 @@
     const canGerminate = state.water && state.air && temperatureOk;
     const temperatureFactor = state.temperature >= 20 && state.temperature <= 30 ? 1 : .72;
     const germination = canGerminate ? Math.min(1, state.days / 3 * temperatureFactor) : 0;
-    const growthDays = Math.max(0, state.days - 3);
-    const growthFactor = state.water && temperatureOk ? (state.light ? 1 : .35) : 0;
+    // 成長は発芽が完了してから始める。発芽条件が欠けたときに、
+    // 図は種子のままなのに数値だけ成長する食い違いを防ぐ。
+    const germinationDays = 3 / temperatureFactor;
+    const growthDays = germination >= 1 ? Math.max(0, state.days - germinationDays) : 0;
+    const growthFactor = canGerminate && germination >= 1 ? (state.light ? 1 : .35) : 0;
     const height = Math.round(growthDays * 2.2 * growthFactor * 10) / 10;
     const leaves = Math.max(0, Math.min(5, Math.floor(growthDays * growthFactor / 2)));
     return { temperatureOk, canGerminate, germination, height, leaves };
@@ -232,7 +236,7 @@
     const leaves = Array.from({ length: model.leaves }, (_, index) => {
       const y = Math.max(125, topY + 34 + index * 28);
       const side = index % 2 ? 1 : -1;
-      return `<ellipse class="plant-leaf" cx="${380 + side * 33}" cy="${y}" rx="35" ry="13" transform="rotate(${side * 26} ${380 + side * 33} ${y})"/>`;
+      return `<g transform="rotate(${side * 26} ${380 + side * 33} ${y})"><ellipse class="plant-leaf" cx="${380 + side * 33}" cy="${y}" rx="35" ry="13"/></g>`;
     }).join("");
     const rootLength = sprout ? Math.min(95, 28 + model.height * 11) : model.germination * 36;
     return `<svg class="plant-sim-svg" viewBox="0 0 760 360" role="img" aria-label="種子から植物へ変化するシミュレーション">
@@ -255,8 +259,8 @@
     const fruitGrowing = state.pollen && state.days >= 1;
     const flower = (x, label, pollinated) => `<g transform="translate(${x} 0)">
       <path class="flower-stem" d="M0 264 V160"/><ellipse class="flower-leaf" cx="-31" cy="225" rx="34" ry="13" transform="rotate(-22 -31 225)"/><ellipse class="flower-leaf" cx="31" cy="203" rx="34" ry="13" transform="rotate(22 31 203)"/>
-      ${fruitReady && pollinated ? `<ellipse class="flower-fruit" cx="0" cy="198" rx="34" ry="40"/><path class="fruit-line" d="M0 160v-18"/>` : `<g class="flower-head"><circle cx="0" cy="137" r="24"/>${[0,60,120,180,240,300].map(angle => `<ellipse cx="0" cy="101" rx="16" ry="32" transform="rotate(${angle} 0 137)"/>`).join("")}</g><path class="flower-pistil" d="M0 160v-50"/>`}
-      ${pollinated ? `<circle class="pollen-cloud" cx="0" cy="105" r="${fruitGrowing ? 5 : 9}"/>` : ""}
+      ${fruitReady && pollinated ? `<ellipse class="flower-fruit" cx="0" cy="198" rx="34" ry="40"/><path class="fruit-line" d="M0 160v-18"/>${seedsReady ? '<ellipse class="fruit-seed" fill="#fff2bd" stroke="#946b32" stroke-width="1" cx="-12" cy="190" rx="3" ry="5"/><ellipse class="fruit-seed" fill="#fff2bd" stroke="#946b32" stroke-width="1" cx="0" cy="201" rx="3" ry="5"/><ellipse class="fruit-seed" fill="#fff2bd" stroke="#946b32" stroke-width="1" cx="12" cy="190" rx="3" ry="5"/><ellipse class="fruit-seed" fill="#fff2bd" stroke="#946b32" stroke-width="1" cx="-7" cy="212" rx="3" ry="5"/><ellipse class="fruit-seed" fill="#fff2bd" stroke="#946b32" stroke-width="1" cx="8" cy="213" rx="3" ry="5"/>' : ""}` : `<g class="flower-head"><circle cx="0" cy="137" r="24"/>${[0,60,120,180,240,300].map(angle => `<ellipse cx="0" cy="101" rx="16" ry="32" transform="rotate(${angle} 0 137)"/>`).join("")}</g><path class="flower-pistil" d="M0 160v-50"/>`}
+      ${pollinated && !fruitReady ? `<circle class="pollen-cloud" cx="0" cy="105" r="${fruitGrowing ? 5 : 9}"/>` : ""}
       <text class="flower-label" x="0" y="306" text-anchor="middle">${label}</text>
       <text class="flower-state" x="0" y="330" text-anchor="middle">${pollinated ? (seedsReady ? "実と種子ができた" : fruitReady ? "実ができた" : "受粉した") : "受粉していない"}</text>
     </g>`;
@@ -271,6 +275,7 @@
     let mode = "growth";
     const growth = { ...DEFAULT_GROWTH };
     const flower = { ...DEFAULT_FLOWER };
+    let flowerDayRange;
 
     function paintGrowth() {
       const model = growthModel(growth);
@@ -318,11 +323,11 @@
         ], applyPreset);
       } else {
         const pollen = core.section(ui.panel, "受粉を操作", "花粉の移動を試してみよう");
-        core.action(pollen, "虫が花粉を運ぶ", () => { flower.pollen = true; flower.source = "虫"; paint(); }, "control-action");
-        core.action(pollen, "人が花粉をつける", () => { flower.pollen = true; flower.source = "人"; paint(); }, "control-action");
-        core.action(pollen, "花粉をつけない", () => { flower.pollen = false; flower.source = "なし"; paint(); }, "control-action");
+        core.action(pollen, "虫が花粉を運ぶ", () => { flower.pollen = true; flower.source = "虫"; flower.days = 0; flowerDayRange?.set(0); paint(); }, "control-action");
+        core.action(pollen, "人が花粉をつける", () => { flower.pollen = true; flower.source = "人"; flower.days = 0; flowerDayRange?.set(0); paint(); }, "control-action");
+        core.action(pollen, "花粉をつけない", () => { flower.pollen = false; flower.source = "なし"; flower.days = 0; flowerDayRange?.set(0); paint(); }, "control-action");
         const time = core.section(ui.panel, "時間を進める");
-        core.range(time, { label: "経過日数", min: 0, max: 7, value: flower.days, format: value => `${value}日`, onInput: value => { flower.days = value; paint(); } });
+        flowerDayRange = core.range(time, { label: "経過日数", min: 0, max: 7, value: flower.days, format: value => `${value}日`, onInput: value => { flower.days = value; paint(); } });
         core.presets(ui.panel, [{ id: "pollinate", label: "人が受粉" }, { id: "no-pollinate", label: "受粉なし" }], applyPreset);
       }
     }
@@ -371,8 +376,9 @@
   function fishSvg(state, stage) {
     const scale = state.magnification / 2;
     const eggR = stage.hatched ? 0 : 62;
-    const body = stage.body ? `<path class="egg-fish" d="M335 174c34-42 98-26 119 8-20 32-83 47-119 8l-35 23 11-33-11-33z"/><circle class="egg-eye" cx="409" cy="175" r="7"/>` : "";
-    const cells = !stage.body ? Array.from({ length: state.days >= 2 ? Math.min(8, 2 + state.days) : 1 }, (_, i) => `<circle class="egg-cell" cx="${370 + Math.cos(i * 1.3) * 28}" cy="${175 + Math.sin(i * 1.3) * 28}" r="${state.days >= 2 ? 10 : 25}"/>`).join("") : "";
+    const bodyProgress = Math.max(0, Math.min(1, (state.days - 2) / 2));
+    const body = bodyProgress > 0 ? `<g opacity="${bodyProgress}"><path class="egg-fish" d="M335 174c34-42 98-26 119 8-20 32-83 47-119 8l-35 23 11-33-11-33z"/><circle class="egg-eye" cx="409" cy="175" r="7" opacity="${Math.max(0, Math.min(1, state.days - 3))}"/></g>` : "";
+    const cells = !stage.hatched ? Array.from({ length: Math.max(1, Math.min(8, 1 + Math.floor(state.days * 1.2))) }, (_, i) => `<circle class="egg-cell" cx="${370 + Math.cos(i * 1.3) * 28}" cy="${175 + Math.sin(i * 1.3) * 28}" r="${state.days < 2 ? 25 - state.days * 7.5 : 10}" opacity="${Math.max(0, 1 - bodyProgress)}"/>`).join("") : "";
     const fry = stage.hatched ? `<path class="fry" d="M319 179c42-33 107-19 127 4-24 32-84 38-127 6l-45 18 23-27-13-31z"/><circle class="egg-eye" cx="407" cy="178" r="7"/>` : "";
     return `<svg class="egg-sim-svg" viewBox="0 0 760 360" role="img" aria-label="メダカの卵が成長するシミュレーション">
       <rect width="760" height="360" fill="#eef8fb"/><path class="water-line" d="M0 78q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/><path class="water-line second" d="M0 306q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/>
@@ -390,7 +396,7 @@
     function paint() {
       const stage = stageFor(state.days);
       ui.stage.innerHTML = fishSvg(state, stage);
-      const message = stage.hatched ? "時間を進めると、卵の中の変化を経て、ふ化して稚魚になります。" : "受精卵は、細胞が増え、目や体ができ、最後にふ化します。";
+      const message = stage.hatched ? "時間を進めると、卵の中の変化を経て、ふ化して稚魚になります。" : state.days < 2 ? "卵の中で細胞が増えていく様子を見てみよう。" : state.days < 4 ? "細胞の変化に加えて、体の形が少しずつ見えてきます。" : "目や体、尾の形がはっきりし、ふ化へ近づいていきます。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "経過", value: `${state.days}日` },
         { label: "観察", value: stage.name },
@@ -414,7 +420,7 @@
     buildControls();
     core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); dayRange.set(state.days); paint(); }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "卵の中の変化を、学習内容に合わせて「細胞が増える → 体ができる → ふ化 → 稚魚」の順で表しています。";
+    ui.note.textContent = "卵の中の変化は学習用に簡略化しています。実際の発生速度や形を正確に再現したものではありません。日数を少しずつ変えて、変化のつながりを観察しましょう。";
     paint();
     return () => ui.destroy();
   }
@@ -455,7 +461,7 @@
       <defs><linearGradient id="weather-sky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#cfeafa"/><stop offset="1" stop-color="#f8fbfd"/></linearGradient></defs>
       <rect width="760" height="360" fill="url(#weather-sky)"/><circle class="weather-sun" cx="90" cy="70" r="28"/>
       ${state.map ? `<path class="weather-map-line" d="M110 210 Q185 185 260 208 T410 207 T560 195 T675 215"/><text class="weather-map-label" x="104" y="135">天気図：${directionLabel}</text>` : `<text class="weather-map-label" x="104" y="135">雲の観察：${directionLabel}</text>`}
-      <g class="weather-cloud" transform="translate(${cloudX} 112)"><circle cx="0" cy="20" r="28"/><circle cx="32" cy="2" r="38"/><circle cx="72" cy="20" r="27"/><rect x="0" y="20" width="72" height="26" rx="13"/><text x="36" y="76" text-anchor="middle">雲</text></g>
+      <g transform="translate(${cloudX} 112)"><g class="weather-cloud"><circle cx="0" cy="20" r="28"/><circle cx="32" cy="2" r="38"/><circle cx="72" cy="20" r="27"/><rect x="0" y="20" width="72" height="26" rx="13"/><text x="36" y="76" text-anchor="middle">雲</text></g></g>
       <path class="weather-arrow" d="${state.wind === "east-west" ? "M640 92 H130" : "M130 92 H640"}"/><path class="weather-arrow-head" d="${state.wind === "east-west" ? "m146 83 -16 9 16 9" : "m624 83 16 9-16 9"}"/>
       ${stationMarkup}<text class="weather-time" x="650" y="332" text-anchor="end">${state.time}時間後</text>
     </svg>`;
@@ -521,18 +527,22 @@
 
   function riverSvg(state, result) {
     const particleCount = Math.min(16, 4 + state.flow + state.speed);
+    const flowDuration = Math.max(.45, 2.2 - state.speed * .3);
     const particles = Array.from({ length: particleCount }, (_, i) => {
       const x = 86 + (i * 43) % 590;
       const y = 112 + Math.sin(i * 1.8) * 22;
-      return `<circle class="river-particle ${state.sediment}" cx="${x}" cy="${y}" r="${state.sediment === "gravel" ? 5 : state.sediment === "mud" ? 3 : 4}" style="--delay:${i * -0.15}s"/>`;
+      return `<circle class="river-particle ${state.sediment}" cx="${x}" cy="${y}" r="${state.sediment === "gravel" ? 5 : state.sediment === "mud" ? 3 : 4}" style="--delay:${i * -0.15}s;animation-duration:${flowDuration}s"/>`;
     }).join("");
-    const deposit = Math.min(105, 18 + result.deposition * .9);
-    const erode = Math.min(44, 10 + result.erosion * .32);
+    // 水を流すまでは、川岸のけずれ・土砂のたい積を描かない。
+    // 川幅・水量・流速の条件が、図にも見えるように反映する。
+    const deposit = state.flow > 0 ? Math.min(105, result.deposition * .9 * Math.min(1, state.flow / 3)) : 0;
+    const erode = state.flow > 0 ? Math.min(44, result.erosion * .32 * Math.min(1, state.flow / 3)) : 0;
+    const waterWidth = 20 + state.width * 6 + state.amount * 2;
     return `<svg class="river-sim-svg" viewBox="0 0 760 360" role="img" aria-label="流れる水が土地をけずり土砂を運びたい積させるシミュレーション">
       <rect width="760" height="360" fill="#eaf5e5"/><path class="river-land" d="M0 0H760V82c-100 18-176 4-263 22-90 18-170 5-252 20C160 136 78 128 0 146Z"/><path class="river-land bottom" d="M0 248c111-25 181-3 269-16 89-13 161 5 247-10 95-17 159-1 244-17V360H0Z"/>
-      <path class="river-water" d="M0 155 C130 128 190 196 303 166 S495 123 760 174"/><path class="river-flow-line" d="M35 153 C155 133 202 184 303 163 S500 131 718 169"/>
+      <path class="river-water" style="stroke-width:${waterWidth}px" d="M0 155 C130 128 190 196 303 166 S495 123 760 174"/><path class="river-flow-line" style="animation-duration:${flowDuration}s" d="M35 153 C155 133 202 184 303 163 S500 131 718 169"/>
       ${particles}<path class="river-eroded" d="M85 145q33-${erode / 2} 65 0v${erode}H85Z"/><path class="river-deposit" d="M604 171q56-${deposit / 2} 105 0v${deposit}H604Z"/>
-      <text class="river-zone" x="76" y="46">上流：けずる</text><text class="river-zone" x="336" y="48">中流：運ぶ</text><text class="river-zone" x="590" y="46">下流：たい積</text>
+      <text class="river-zone" x="76" y="46">上流：けずる</text><text class="river-zone" x="336" y="48">中流：運ぶ</text><text class="river-zone" x="590" y="48">下流：たい積</text>
       <text class="river-callout" x="118" y="316">けずられた場所</text><text class="river-callout" x="614" y="316">土砂がたまる場所</text><text class="river-speed" x="690" y="344" text-anchor="end">流れ ${state.speed}/5</text>
     </svg>`;
   }
@@ -562,12 +572,12 @@
       const sediment = core.section(ui.panel, "土砂の種類");
       core.options(sediment, { label: "土砂", values: SEDIMENTS, value: state.sediment, onChange: value => { state.sediment = value; paint(); } });
       const time = core.section(ui.panel, "時間");
-      timeRange = core.range(time, { label: "経過時間", min: 0, max: 10, value: state.time, format: value => `${value}分`, onInput: value => { state.time = value; state.flow = Math.floor(value / 2); paint(); } });
+      timeRange = core.range(time, { label: "経過時間", min: 0, max: 20, value: state.time, format: value => `${value}分`, onInput: value => { state.time = value; state.flow = Math.floor(value / 2); paint(); } });
       core.presets(ui.panel, [{ id: "erosion", label: "速い流れ" }, { id: "deposit", label: "ゆるやかな流れ" }, { id: "gravel", label: "れきを運ぶ" }], id => { Object.assign(state, id === "deposit" ? { ...DEFAULT, speed: 1, slope: 1, amount: 2 } : id === "gravel" ? { ...DEFAULT, speed: 4, slope: 4, amount: 4, sediment: "gravel" } : { ...DEFAULT, speed: 5, slope: 4, amount: 4 }); buildControls(); paint(); });
     }
     buildControls();
-    core.action(ui.actions, "水を流す", () => { state.flow = Math.min(10, state.flow + 1); state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
-    core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "secondary-button");
+    core.action(ui.actions, "水を流す", () => { state.time = Math.min(20, state.time + 2); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); }, "primary-button");
+    core.action(ui.actions, "時間を進める", () => { state.time = Math.min(20, state.time + 1); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "けずる・運ぶ・たい積する働きの違いを比べる簡易モデルです。数値は実測値ではなく、実際の川の変化を正確に予測するものではありません。";
     paint();
@@ -589,7 +599,9 @@
   }
   function solutionModel(state) {
     const max = capacity(state);
-    const speed = (state.temperature / 80 + (state.stirred ? .65 : .25)) * (state.time / 10) + .08;
+    // 経過0ではまだ物質がとけていない状態から始める。
+    // かき混ぜは、とける速さだけに影響し、溶解度(max)は変えない。
+    const speed = (state.temperature / 80 + (state.stirred ? .65 : .25)) * (state.time / 10);
     const dissolved = Math.min(state.amount, max, Math.round(max * Math.min(1, speed) * 10) / 10);
     return { max, dissolved, leftover: Math.max(0, Math.round((state.amount - dissolved) * 10) / 10), progress: max ? dissolved / Math.min(state.amount, max) : 0 };
   }
@@ -667,18 +679,26 @@
   const DEFAULT = { turns: 100, current: .5, batteries: 1, core: true, on: true, time: 0 };
 
   function model(state) {
+    // 電池の数が増えるほど電流が大きくなる、条件比較用の簡易モデル。
     const batteryFactor = .8 + state.batteries * .2;
-    const strength = state.on ? Math.min(100, Math.round(state.turns / 2.5 * state.current * batteryFactor * (state.core ? 1.45 : .55))) : 0;
+    const effectiveCurrent = state.on ? state.current * batteryFactor : 0;
+    const strength = state.on ? Math.min(100, Math.round(state.turns / 2.5 * effectiveCurrent * (state.core ? 1.45 : .55))) : 0;
     const clips = Math.min(20, Math.floor(strength / 8));
     const range = Math.round(strength / 12);
-    return { strength, clips, range };
+    return { strength, clips, range, effectiveCurrent };
   }
 
   function magnetSvg(state, result) {
-    const coils = Math.max(5, Math.round(state.turns / 20));
-    const coilLines = Array.from({ length: Math.min(18, coils) }, (_, i) => `<path class="coil" d="M${286 + i * 11} 106v116"/>`).join("");
+    const coils = Math.max(5, Math.min(18, Math.round(state.turns / 14)));
+    const coilLines = Array.from({ length: coils }, (_, i) => {
+      const x = coils === 1 ? 380 : 278 + i * (204 / (coils - 1));
+      return `<path class="coil" d="M${x.toFixed(1)} 106v116"/>`;
+    }).join("");
     const clips = Array.from({ length: result.clips }, (_, i) => `<circle class="clip" cx="${270 + (i % 10) * 27}" cy="${278 + Math.floor(i / 10) * 25}" r="8"/>`).join("");
-    const field = state.on ? `<ellipse class="magnetic-field" cx="380" cy="164" rx="${115 + result.range * 3}" ry="${75 + result.range * 2}"/>` : "";
+    // 磁力線を複数の閉じた線で表し、強さに応じて広がりを変える。
+    const field = state.on ? Array.from({ length: 3 }, (_, i) =>
+      `<ellipse class="magnetic-field field-${i + 1}" cx="380" cy="164" rx="${85 + result.range * 4 + i * 20}" ry="${52 + result.range * 2 + i * 11}"/>`
+    ).join("") : "";
     return `<svg class="magnet-sim-svg" viewBox="0 0 760 360" role="img" aria-label="電流とコイルと鉄心で電磁石の強さが変化するシミュレーション"><rect width="760" height="360" fill="#fff8df"/>${field}<rect class="iron-core ${state.core ? "present" : "absent"}" x="270" y="116" width="220" height="96" rx="18"/>${coilLines}<path class="wire-end" d="M286 106V70H205M473 106V70h82"/><circle class="battery" cx="180" cy="70" r="23"/><text class="battery-label" x="180" y="76" text-anchor="middle">${state.batteries}個</text><text class="magnet-title" x="380" y="38" text-anchor="middle">電磁石：${state.on ? "電流が流れている" : "電流を切った"}</text><text class="magnet-label" x="380" y="245" text-anchor="middle">${state.core ? "鉄心あり" : "鉄心なし"}　・　${state.turns}回巻き</text>${clips}<text class="clip-label" x="380" y="340" text-anchor="middle">引きつけたクリップ：${result.clips}個</text></svg>`;
   }
 
@@ -693,13 +713,13 @@
         { label: "強さ（模型値）", value: `${result.strength}/100` },
         { label: "クリップ（目安）", value: `${result.clips}個` },
         { label: "磁力の広がり", value: `${result.range}段階` }
-      ], message, note: `電流：${state.current.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
+      ], message, note: `電流（模型値）：${result.effectiveCurrent.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
-      const coil = core.section(ui.panel, "コイルと電流");
+      const coil = core.section(ui.panel, "コイルと電流", "この模型では、電池を増やすと電流も大きくなるよ。");
       core.range(coil, { label: "コイルの巻き数", min: 50, max: 250, step: 10, value: state.turns, format: value => `${value}回`, onInput: value => { state.turns = value; paint(); } });
-      core.range(coil, { label: "電流の強さ", min: .1, max: 1, step: .1, value: state.current, format: value => `${Number(value).toFixed(1)}A`, onInput: value => { state.current = value; paint(); } });
+      core.range(coil, { label: "電流の調整", min: .1, max: 1, step: .1, value: state.current, format: value => `${Number(value).toFixed(1)}A`, onInput: value => { state.current = value; paint(); } });
       core.options(coil, { label: "電池の数", values: [{ id: "1", label: "1個" }, { id: "2", label: "2個" }, { id: "3", label: "3個" }], value: state.batteries, onChange: value => { state.batteries = Number(value); paint(); } });
       const coreSection = core.section(ui.panel, "鉄心と電流");
       core.options(coreSection, { label: "鉄心", values: [{ id: "yes", label: "あり" }, { id: "no", label: "なし" }], value: state.core ? "yes" : "no", onChange: value => { state.core = value === "yes"; paint(); } });
@@ -710,7 +730,7 @@
     core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "強さ・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。実際の電流や磁力を測定した値ではありません。";
+    ui.note.textContent = "強さ・電流・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。電池の数と電流の関係も簡略化しており、実際に測定した値ではありません。";
     paint();
     return () => ui.destroy();
   }
@@ -732,7 +752,9 @@
   }
 
   function pendulumSvg(state, result) {
-    const angle = state.measuring ? Math.sin(Date.now() / 430) * state.amplitude : -state.amplitude;
+    // 表示上の揺れも、計算した周期に合わせる。長いふりこほどゆっくり動く。
+    const phase = Date.now() * 2 * Math.PI / (Math.max(0.1, result.period) * 1000);
+    const angle = state.measuring ? Math.sin(phase) * state.amplitude : -state.amplitude;
     const bobY = 100 + state.length * 1.8;
     const bobRadius = 18 + state.weight / 25;
     const stringLength = bobY - bobRadius - 70;
