@@ -8,7 +8,7 @@
     river: { id: "river", title: "流れる水LAB", unit: "流れる水のはたらき", summary: "水を流し、けずる・運ぶ・たい積する場所の変化を見ます。", accent: "#2d86a6", script: "labs/river-lab.js" },
     solutions: { id: "solutions", title: "もののとけ方LAB", unit: "物のとけ方", summary: "水の量・温度・物質を変えて、とける速さと量を比べます。", accent: "#80649b", script: "labs/solutions-lab.js" },
     electromagnet: { id: "electromagnet", title: "電磁石LAB", unit: "電流がつくる磁力", summary: "コイル・電流・鉄心を変えて、電磁石の強さを見ます。", accent: "#bd8a13", script: "labs/electromagnet-lab.js" },
-    pendulum: { id: "pendulum", title: "ふりこLAB", unit: "ふりこの運動", summary: "長さ・重さ・振れ幅を変えて、1往復の時間を比べます。", accent: "#7565a3", script: "labs/pendulum-lab.js" }
+    pendulum: { id: "pendulum", title: "ふりこLAB", unit: "ふりこの運動", summary: "長さ・重さ・振れ幅を変えて、1往復の時間を比べます。", accent: "#7565a3", script: "labs/pendulum-lab.js?v=pendulum-period-model-20261011" }
   };
   const loaded = new Map();
   let activeCleanup = null;
@@ -39,7 +39,8 @@
     if (!manifest) { root.innerHTML = `<section class="empty-state"><h1>このLABはまだありません</h1><button class="primary-button" type="button" data-lab-home>一覧へ戻る</button></section>`; return null; }
     root.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">${manifest.title.slice(0, 1)}</span><h1>${manifest.title}を準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
     if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js");
-    if (!window.RikaFiveSimulations?.[id]) await loadScript(manifest.script);
+    // labs/*.js を正本として必ず読み込み、app.js 内の旧バンドルより最新の実装を優先する。
+    await loadScript(manifest.script);
     const factory = window.RikaFiveSimulations?.[id];
     if (!factory) throw new Error("Simulation factory missing");
     activeCleanup = factory.mount(root, { core: window.RikaFiveLabCore, host, manifest }) || null;

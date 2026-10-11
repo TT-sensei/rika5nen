@@ -5,7 +5,11 @@
 
   function model(state) {
     const base = 2 * Math.PI * Math.sqrt((state.length / 100) / 9.8);
-    const amplitudeFactor = 1 + Math.max(0, state.amplitude - 20) * .001;
+    // 振れ幅による周期のわずかな変化を、小角度近似の補正式で表す。
+    // 小学校の実験で扱う小さな振れ幅では差が小さいことも、結果に反映する。
+    const angle = state.amplitude * Math.PI / 180;
+    const angleSquared = angle * angle;
+    const amplitudeFactor = 1 + angleSquared / 16 + 11 * angleSquared * angleSquared / 3072;
     const period = Math.round(base * amplitudeFactor * 100) / 100;
     const total = Math.round(period * state.count * 100) / 100;
     return { period, total };
