@@ -41,9 +41,9 @@
       let message = result.erosion > result.deposition ? "流れが速いほど、けずる・運ぶ力が大きくなります。" : "流れがゆるやかな場所では、運ばれた土砂がたい積します。";
       if (state.flow) message += " 水を流した回数が増えるほど、川の形の変化も大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "けずる力", value: `${result.erosion}/100` },
-        { label: "運ぶ土砂", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
-        { label: "たい積", value: `${result.deposition}/100` }
+        { label: "けずる働き（指標）", value: `${result.erosion}/100` },
+        { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
+        { label: "たい積（指標）", value: `${result.deposition}/100` }
       ], message, note: `水を流した回数：${state.flow}回　／　川幅：${state.width}` });
     }
     function buildControls() {
@@ -63,7 +63,7 @@
     core.action(ui.actions, "水を流す", () => { state.flow = Math.min(10, state.flow + 1); state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
     core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "川の上流・中流・下流を一つのモデルに置き、水の速さや量が変わったときの傾向を見えるようにしています。";
+    ui.note.textContent = "けずる・運ぶ・たい積する働きの違いを比べる簡易モデルです。数値は実測値ではなく、実際の川の変化を正確に予測するものではありません。";
     paint();
     return () => ui.destroy();
   }

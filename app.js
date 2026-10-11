@@ -311,7 +311,7 @@
       paint();
     }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "発芽のモデルは、水・空気・適した温度を発芽条件、日光を発芽後の成長条件として分けて表示しています。";
+    ui.note.textContent = "数値や成長の速さは条件を比べるための模型上の目安です。実際の発芽日数や草丈を予測するものではありません。発芽条件と、その後の成長条件を分けて見ましょう。";
     addModeControls();
     paint();
     return () => ui.destroy();
@@ -440,7 +440,7 @@
         { label: "観察地点", value: STATIONS[stationIndex].label },
         { label: "現在の天気", value: current },
         { label: "経過", value: `${state.time}時間後` }
-      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `風向きを${direction}にすると、雲の動きと天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `風向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
+      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `雲の進む向きを${direction}にすると、各地点の天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `雲の進む向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
@@ -448,8 +448,8 @@
       timeRange = core.range(time, { label: "経過時間", min: 0, max: 8, value: state.time, format: value => `${value}時間後`, onInput: value => { state.time = value; paint(); } });
       const cloud = core.section(ui.panel, "雲の動き");
       core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; paint(); } });
-      const wind = core.section(ui.panel, "風向き");
-      core.options(wind, { label: "風", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
+      const wind = core.section(ui.panel, "雲の進む向き");
+      core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
       const map = core.section(ui.panel, "表示");
       core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
       const point = core.section(ui.panel, "観察地点");
@@ -459,7 +459,7 @@
     buildControls();
     core.action(ui.actions, "1時間進める", () => { state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "天気の変化は、雲が動く方向と観察地点を比べるための簡易モデルです。";
+    ui.note.textContent = "雲の進む向きを比べる簡易モデルです。実際の雲や天気の変化を正確に予測するものではありません。";
     paint();
     return () => ui.destroy();
   }
@@ -510,9 +510,9 @@
       let message = result.erosion > result.deposition ? "流れが速いほど、けずる・運ぶ力が大きくなります。" : "流れがゆるやかな場所では、運ばれた土砂がたい積します。";
       if (state.flow) message += " 水を流した回数が増えるほど、川の形の変化も大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "けずる力", value: `${result.erosion}/100` },
-        { label: "運ぶ土砂", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
-        { label: "たい積", value: `${result.deposition}/100` }
+        { label: "けずる働き（指標）", value: `${result.erosion}/100` },
+        { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
+        { label: "たい積（指標）", value: `${result.deposition}/100` }
       ], message, note: `水を流した回数：${state.flow}回　／　川幅：${state.width}` });
     }
     function buildControls() {
@@ -532,7 +532,7 @@
     core.action(ui.actions, "水を流す", () => { state.flow = Math.min(10, state.flow + 1); state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
     core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 1); timeRange.set(state.time); paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "川の上流・中流・下流を一つのモデルに置き、水の速さや量が変わったときの傾向を見えるようにしています。";
+    ui.note.textContent = "けずる・運ぶ・たい積する働きの違いを比べる簡易モデルです。数値は実測値ではなく、実際の川の変化を正確に予測するものではありません。";
     paint();
     return () => ui.destroy();
   }
@@ -585,11 +585,11 @@
       else if (model.leftover > 0) message = `この条件では${model.leftover}gがとけ残ります。水の量や温度を変えると、とける量も変わります。`;
       else message = "この時間では、入れた物質がすべて水に広がっています。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "とけた量", value: `${model.dissolved}g` },
-        { label: "とけ残り", value: `${model.leftover}g` },
-        { label: "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
-        { label: "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
-        { label: "水溶液全体の重さ", value: `${state.water + state.amount}g` }
+        { label: state.evaporated ? "蒸発前にとけた量" : "とけた量", value: `${model.dissolved}g` },
+        { label: state.evaporated ? "蒸発前のとけ残り" : "とけ残り", value: `${model.leftover}g` },
+        { label: state.evaporated ? "蒸発前の溶解度の目安" : "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
+        { label: state.evaporated ? "蒸発前の状態" : "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
+        { label: state.evaporated ? "蒸発後に残る物質" : "水溶液全体の重さ", value: `${state.evaporated ? state.amount : state.water + state.amount}g` }
       ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃` });
       if (evaporateButton) evaporateButton.textContent = state.evaporated ? "水に戻す" : "水を蒸発させる";
     }
@@ -609,7 +609,7 @@
     core.action(ui.actions, "10秒進める", () => { state.time = Math.min(10, state.time + 2); timeRange.set(state.time); paint(); }, "primary-button");
     evaporateButton = core.action(ui.actions, "水を蒸発させる", () => { state.evaporated = !state.evaporated; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "「かき混ぜる」はとける速さに関係し、「最終的にとける量」は水の量・温度・物質の種類で変わるものとして表示しています。";
+    ui.note.textContent = "数値は水の量・温度・物質による違いを比べるための模型上の目安です。実際の溶解度や溶ける速さを正確に再現した値ではありません。";
     paint();
     return () => ui.destroy();
   }
@@ -646,9 +646,9 @@
       ui.stage.innerHTML = magnetSvg(state, result);
       const message = !state.on ? "電流を切ると、電磁石の磁力はほとんどなくなります。" : state.core ? "コイルの巻き数・電流・鉄心を大きくすると、電磁石は強くなります。" : "鉄心を入れると、同じコイルと電流でも磁力の範囲が大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "電磁石の強さ", value: `${result.strength}/100` },
-        { label: "クリップ", value: `${result.clips}個` },
-        { label: "磁力の範囲", value: `${result.range}cm` }
+        { label: "強さ（模型値）", value: `${result.strength}/100` },
+        { label: "クリップ（目安）", value: `${result.clips}個` },
+        { label: "磁力の広がり", value: `${result.range}段階` }
       ], message, note: `電流：${state.current.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
     }
     function buildControls() {
@@ -666,7 +666,7 @@
     core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "電池の数は電流を大きくする要因として扱い、巻き数・電流・鉄心を変えたときの磁力の変化を比べます。";
+    ui.note.textContent = "強さ・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。実際の電流や磁力を測定した値ではありません。";
     paint();
     return () => ui.destroy();
   }
@@ -689,7 +689,10 @@
 
   function pendulumSvg(state, result) {
     const angle = state.measuring ? Math.sin(Date.now() / 430) * state.amplitude : -state.amplitude;
-    return `<svg class="pendulum-sim-svg" viewBox="0 0 760 360" role="img" aria-label="ふりこの長さや重さや振れ幅を変えるシミュレーション"><rect width="760" height="360" fill="#f3effb"/><path class="pendulum-frame" d="M270 52h220M300 52v35M460 52v35"/><path class="pendulum-string" d="M380 70v${210 - Math.min(100, state.length)}" transform="rotate(${angle} 380 70)"/><circle class="pendulum-bob" cx="380" cy="${280 - Math.min(100, state.length)}" r="${18 + state.weight / 25}" transform="rotate(${angle} 380 70)"/><path class="angle-guide" d="M300 90q80 55 160 0"/><text class="pendulum-title" x="380" y="34" text-anchor="middle">ふりこの動き</text><text class="pendulum-label" x="380" y="328" text-anchor="middle">長さ ${state.length}cm　・　おもり ${state.weight}g　・　振れ幅 ${state.amplitude}°</text></svg>`;
+    const bobY = 100 + state.length * 1.8;
+    const bobRadius = 18 + state.weight / 25;
+    const stringLength = bobY - bobRadius - 70;
+    return `<svg class="pendulum-sim-svg" viewBox="0 0 760 360" role="img" aria-label="ふりこの長さや重さや振れ幅を変えるシミュレーション"><rect width="760" height="360" fill="#f3effb"/><path class="pendulum-frame" d="M270 52h220M300 52v35M460 52v35"/><path class="pendulum-string" d="M380 70v${stringLength}" transform="rotate(${angle} 380 70)"/><circle class="pendulum-bob" cx="380" cy="${bobY}" r="${bobRadius}" transform="rotate(${angle} 380 70)"/><path class="angle-guide" d="M300 90q80 55 160 0"/><text class="pendulum-title" x="380" y="34" text-anchor="middle">ふりこの動き</text><text class="pendulum-label" x="380" y="328" text-anchor="middle">長さ ${state.length}cm　・　おもり ${state.weight}g　・　振れ幅 ${state.amplitude}°</text></svg>`;
   }
 
   function mount(root, { core, host, manifest }) {
@@ -713,8 +716,8 @@
       core.renderReadout(ui.readout, { metrics: [
         { label: "1往復の時間", value: `${result.period}秒` },
         { label: `${state.count}往復の時間`, value: `${result.total}秒` },
-        { label: "測定", value: state.measured ? `${state.measured}秒` : "ボタンで測る" }
-      ], message, note: "測定は、同じ条件で同じ回数を比べるための目安です。" });
+        { label: "計算値", value: state.measured ? `${state.measured}秒` : "まだ計算していない" }
+      ], message, note: "表示される時間は、条件から求めた計算上の目安です。実際に振って測った時間ではありません。" });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
@@ -727,7 +730,7 @@
       core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); buildControls(); paint(); });
     }
     buildControls();
-    core.action(ui.actions, "10往復を測る", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = true; countOptions.set(10); paint(); cancelAnimationFrame(animationFrame); animationFrame = requestAnimationFrame(animate); }, "primary-button");
+    core.action(ui.actions, "10往復の時間を計算", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = false; countOptions.set(10); cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
     core.action(ui.actions, "振らせる / 止める", () => { state.measuring = !state.measuring; paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); cancelAnimationFrame(animationFrame); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "ふりこの長さ・おもりの重さ・振れ幅を同時に変えず、一つずつ変化を確かめられるようにしています。";

@@ -43,11 +43,11 @@
       else if (model.leftover > 0) message = `この条件では${model.leftover}gがとけ残ります。水の量や温度を変えると、とける量も変わります。`;
       else message = "この時間では、入れた物質がすべて水に広がっています。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "とけた量", value: `${model.dissolved}g` },
-        { label: "とけ残り", value: `${model.leftover}g` },
-        { label: "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
-        { label: "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
-        { label: "水溶液全体の重さ", value: `${state.water + state.amount}g` }
+        { label: state.evaporated ? "蒸発前にとけた量" : "とけた量", value: `${model.dissolved}g` },
+        { label: state.evaporated ? "蒸発前のとけ残り" : "とけ残り", value: `${model.leftover}g` },
+        { label: state.evaporated ? "蒸発前の溶解度の目安" : "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
+        { label: state.evaporated ? "蒸発前の状態" : "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
+        { label: state.evaporated ? "蒸発後に残る物質" : "水溶液全体の重さ", value: `${state.evaporated ? state.amount : state.water + state.amount}g` }
       ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃` });
       if (evaporateButton) evaporateButton.textContent = state.evaporated ? "水に戻す" : "水を蒸発させる";
     }
@@ -67,7 +67,7 @@
     core.action(ui.actions, "10秒進める", () => { state.time = Math.min(10, state.time + 2); timeRange.set(state.time); paint(); }, "primary-button");
     evaporateButton = core.action(ui.actions, "水を蒸発させる", () => { state.evaporated = !state.evaporated; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "「かき混ぜる」はとける速さに関係し、「最終的にとける量」は水の量・温度・物質の種類で変わるものとして表示しています。";
+    ui.note.textContent = "数値は水の量・温度・物質による違いを比べるための模型上の目安です。実際の溶解度や溶ける速さを正確に再現した値ではありません。";
     paint();
     return () => ui.destroy();
   }
