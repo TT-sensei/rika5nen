@@ -677,7 +677,7 @@
         { label: state.evaporated ? "蒸発前の溶解度の目安" : "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
         { label: state.evaporated ? "蒸発前の状態" : "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : model.leftover > 0 ? "とけている途中" : "全部とけた" },
         { label: state.evaporated ? "蒸発後に残る物質" : "水と物質の合計", value: `${state.evaporated ? state.amount : state.water + state.amount}g` }
-      ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃` });
+      ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃　／　かき混ぜ：${state.stirred ? "する（とける速さに影響）" : "しない"}　／　溶解度はかき混ぜでは変わらない` });
       if (evaporateButton) evaporateButton.textContent = state.evaporated ? "水に戻す" : "水を蒸発させる";
     }
     function buildControls() {
