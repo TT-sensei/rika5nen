@@ -117,12 +117,12 @@
         const germination = core.section(ui.panel, "発芽の条件", "発芽に必要な3条件");
         core.options(germination, { label: "水", values: boolOption, value: growth.water ? "yes" : "no", onChange: value => { growth.water = value === "yes"; paint(); } });
         core.options(germination, { label: "空気", values: boolOption, value: growth.air ? "yes" : "no", onChange: value => { growth.air = value === "yes"; paint(); } });
-        core.range(germination, { label: "温度", min: 5, max: 35, value: growth.temperature, format: value => `${value}℃`, onInput: value => { growth.temperature = value; paint(); } });
+        core.range(germination, { label: "温度", min: 5, max: 45, value: growth.temperature, format: value => `${value}℃`, onInput: value => { growth.temperature = value; paint(); } });
         const growthSection = core.section(ui.panel, "成長と時間");
         core.options(growthSection, { label: "日光", values: boolOption, value: growth.light ? "yes" : "no", onChange: value => { growth.light = value === "yes"; paint(); } });
         core.range(growthSection, { label: "経過日数", min: 0, max: 10, value: growth.days, format: value => `${value}日`, onInput: value => { growth.days = value; paint(); } });
         core.presets(ui.panel, [
-          { id: "germinate", label: "発芽条件OK" }, { id: "no-water", label: "水なし" }, { id: "no-light", label: "日光なし" }
+          { id: "germinate", label: "発芽条件OK" }, { id: "no-water", label: "水なし" }, { id: "no-light", label: "日光なし" }, { id: "hot-temp", label: "高温" }
         ], applyPreset);
       } else {
         const pollen = core.section(ui.panel, "受粉を操作", "花粉の移動を試してみよう");
@@ -137,7 +137,7 @@
 
     function applyPreset(id) {
       if (mode === "growth") {
-        Object.assign(growth, id === "no-water" ? { ...DEFAULT_GROWTH, water: false } : id === "no-light" ? { ...DEFAULT_GROWTH, light: false, days: 8 } : { ...DEFAULT_GROWTH, days: 5 });
+        Object.assign(growth, id === "no-water" ? { ...DEFAULT_GROWTH, water: false } : id === "no-light" ? { ...DEFAULT_GROWTH, light: false, days: 8 } : id === "hot-temp" ? { ...DEFAULT_GROWTH, temperature: 40, days: 5 } : { ...DEFAULT_GROWTH, days: 5 });
       } else {
         Object.assign(flower, id === "no-pollinate" ? { ...DEFAULT_FLOWER, days: 5 } : { ...DEFAULT_FLOWER, pollen: true, source: "人", days: 5 });
       }
