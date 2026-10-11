@@ -14,8 +14,9 @@
   function fishSvg(state, stage) {
     const scale = state.magnification / 2;
     const eggR = stage.hatched ? 0 : 62;
-    const body = stage.body ? `<path class="egg-fish" d="M335 174c34-42 98-26 119 8-20 32-83 47-119 8l-35 23 11-33-11-33z"/><circle class="egg-eye" cx="409" cy="175" r="7"/>` : "";
-    const cells = !stage.body ? Array.from({ length: state.days >= 2 ? Math.min(8, 2 + state.days) : 1 }, (_, i) => `<circle class="egg-cell" cx="${370 + Math.cos(i * 1.3) * 28}" cy="${175 + Math.sin(i * 1.3) * 28}" r="${state.days >= 2 ? 10 : 25}"/>`).join("") : "";
+    const bodyProgress = Math.max(0, Math.min(1, (state.days - 2) / 2));
+    const body = bodyProgress > 0 ? `<g opacity="${bodyProgress}"><path class="egg-fish" d="M335 174c34-42 98-26 119 8-20 32-83 47-119 8l-35 23 11-33-11-33z"/><circle class="egg-eye" cx="409" cy="175" r="7" opacity="${Math.max(0, Math.min(1, state.days - 3))}"/></g>` : "";
+    const cells = !stage.hatched ? Array.from({ length: Math.max(1, Math.min(8, 1 + Math.floor(state.days * 1.2))) }, (_, i) => `<circle class="egg-cell" cx="${370 + Math.cos(i * 1.3) * 28}" cy="${175 + Math.sin(i * 1.3) * 28}" r="${state.days < 2 ? 25 - state.days * 7.5 : 10}" opacity="${Math.max(0, 1 - bodyProgress)}"/>`).join("") : "";
     const fry = stage.hatched ? `<path class="fry" d="M319 179c42-33 107-19 127 4-24 32-84 38-127 6l-45 18 23-27-13-31z"/><circle class="egg-eye" cx="407" cy="178" r="7"/>` : "";
     return `<svg class="egg-sim-svg" viewBox="0 0 760 360" role="img" aria-label="メダカの卵が成長するシミュレーション">
       <rect width="760" height="360" fill="#eef8fb"/><path class="water-line" d="M0 78q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/><path class="water-line second" d="M0 306q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/>
@@ -33,7 +34,7 @@
     function paint() {
       const stage = stageFor(state.days);
       ui.stage.innerHTML = fishSvg(state, stage);
-      const message = stage.hatched ? "時間を進めると、卵の中の変化を経て、ふ化して稚魚になります。" : "受精卵は、細胞が増え、目や体ができ、最後にふ化します。";
+      const message = stage.hatched ? "時間を進めると、卵の中の変化を経て、ふ化して稚魚になります。" : state.days < 2 ? "卵の中で細胞が増えていく様子を見てみよう。" : state.days < 4 ? "細胞の変化に加えて、体の形が少しずつ見えてきます。" : "目や体、尾の形がはっきりし、ふ化へ近づいていきます。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "経過", value: `${state.days}日` },
         { label: "観察", value: stage.name },
@@ -57,7 +58,7 @@
     buildControls();
     core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); dayRange.set(state.days); paint(); }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "卵の中の変化を、学習内容に合わせて「細胞が増える → 体ができる → ふ化 → 稚魚」の順で表しています。";
+    ui.note.textContent = "卵の中の変化は学習用に簡略化しています。実際の発生速度や形を正確に再現したものではありません。日数を少しずつ変えて、変化のつながりを観察しましょう。";
     paint();
     return () => ui.destroy();
   }
