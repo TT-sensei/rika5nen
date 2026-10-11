@@ -361,3 +361,27 @@ body{background:radial-gradient(circle at 90% 0,#d7f2df 0,transparent 30rem),var
 
 /* Apply grade color to navigation and cards */
 :root{--grade-accent:#41a866;--grade-deep:#174b32;--grade-soft:#e3f6e8;--grade-card:#f8fff9} .site-header,.header-bar{background:var(--grade-deep)!important}.unit-card,.lab-card,.asset-card,.home-collection-badge,.phase-tab,.activity-card,.activity-nav,.unit-banner{border-color:#bfe1c8;background:var(--grade-card)}.unit-card:hover,.lab-card:hover,.asset-card:hover{border-color:var(--grade-accent)}.primary-button,.tab-button.active,.phase-tab[aria-selected="true"]{background:var(--grade-accent)!important;border-color:var(--grade-accent)!important}.unit-banner{border-top-color:var(--grade-accent)}
+
+
+/* Grade 5 LAB usability pass: larger diagrams and comfortable touch targets */
+.lab-screen{width:min(1500px,calc(100% - 2rem))}
+.lab-workspace{grid-template-columns:minmax(0,1.65fr) minmax(360px,.85fr);gap:14px}
+.sim-stage{min-height:420px}
+.control-panel{padding:14px;overflow:visible}
+.control-section{margin:9px 0 0;padding:9px 10px;border-radius:12px}
+.control-section h3{font-size:.8rem}
+.control-section>p{font-size:.7rem;line-height:1.45}
+.range-control{font-size:.76rem;margin:7px 0}
+.range-control input{min-height:32px;height:32px}
+.segmented-control>span{font-size:.74rem}
+.segmented-control>div{gap:5px}
+.segmented-control button,.control-action,.preset-button{min-height:40px;padding:7px 9px;border-radius:10px;font-size:.74rem}
+.preset-buttons{gap:6px}
+.preset-button{min-height:38px}
+.sim-actions{gap:8px;padding:8px 12px}
+.sim-actions button{min-height:40px;padding:.55rem .85rem;font-size:.78rem}
+.model-note{font-size:.72rem;line-height:1.5}
+@media (min-width:901px) and (orientation:landscape){[data-control-panel]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}[data-control-panel]>.control-section{min-width:0;margin:0}[data-control-panel]>.preset-section{grid-column:1/-1}}
+@media (min-width:761px) and (max-width:900px){.lab-workspace{grid-template-columns:1fr}.sim-stage{min-height:380px}[data-control-panel]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}[data-control-panel]>.control-section{margin:0}[data-control-panel]>.preset-section{grid-column:1/-1}}
+@media (max-width:760px){.lab-screen{width:calc(100% - 1rem)}.lab-workspace{grid-template-columns:1fr;gap:10px}.sim-stage{min-height:280px}.control-panel{padding:12px;overflow:visible}[data-control-panel]{display:block}[data-control-panel]>.control-section{margin:8px 0 0}.range-control input{min-height:36px;height:36px}.segmented-control button,.control-action,.preset-button{min-height:44px;font-size:.78rem}.sim-actions button{min-height:44px}}
+@media (max-width:430px){.sim-stage{min-height:240px}.lab-titlebar h1{font-size:1.2rem}.instant-metric span{font-size:.62rem}.instant-metric b{font-size:.76rem}}
