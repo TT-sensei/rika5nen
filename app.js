@@ -215,11 +215,47 @@
     target._labCompareUpdate?.();
   }
 
+  function playback(parent, { interval = 900, onStep, onStateChange } = {}) {
+    let timer = 0;
+    let playing = false;
+    const button = action(parent, "▶ 再生", start, "primary-button playback-button");
+    function stop() {
+      if (timer) window.clearInterval(timer);
+      timer = 0;
+      if (!playing) return;
+      playing = false;
+      button.textContent = "▶ 再生";
+      button.setAttribute("aria-pressed", "false");
+      onStateChange?.(false);
+    }
+    function start() {
+      if (playing) { stop(); return; }
+      playing = true;
+      button.textContent = "Ⅱ 一時停止";
+      button.setAttribute("aria-pressed", "true");
+      onStateChange?.(true);
+      timer = window.setInterval(() => {
+        if (onStep?.() === false) stop();
+      }, interval);
+    }
+    button.setAttribute("aria-pressed", "false");
+    return {
+      stop,
+      isPlaying: () => playing,
+      destroy() {
+        if (timer) window.clearInterval(timer);
+        timer = 0;
+        playing = false;
+        button.remove();
+      }
+    };
+  }
+
   function renderError(root, message) {
     root.innerHTML = `<section class="empty-state lab-error"><h1>LABを読み込めませんでした</h1><p>${esc(message || "画面を更新して、もう一度試してください。")}</p><button class="primary-button" type="button" data-lab-home>シミュレーション一覧へ</button></section>`;
   }
 
-  window.RikaFiveLabCore = { esc, shell, section, range, options, action, presets, renderReadout, renderError };
+  window.RikaFiveLabCore = { esc, shell, section, range, options, action, presets, playback, renderReadout, renderError };
 })();
 
 /* --- labs/plants-lab.js --- */
@@ -294,6 +330,8 @@
     const growth = { ...DEFAULT_GROWTH };
     const flower = { ...DEFAULT_FLOWER };
     let flowerDayRange;
+    let growthDayRange;
+    let playbackControl;
 
     function paintGrowth() {
       const model = growthModel(growth);
@@ -345,7 +383,7 @@
         core.range(germination, { label: "温度", min: 5, max: 45, value: growth.temperature, format: value => `${value}℃`, onInput: value => { growth.temperature = value; paint(); } });
         const growthSection = core.section(ui.panel, "成長と時間");
         core.options(growthSection, { label: "日光", values: boolOption, value: growth.light ? "yes" : "no", onChange: value => { growth.light = value === "yes"; paint(); } });
-        core.range(growthSection, { label: "経過日数", min: 0, max: 10, value: growth.days, format: value => `${value}日`, onInput: value => { growth.days = value; paint(); } });
+        growthDayRange = core.range(growthSection, { label: "経過日数", min: 0, max: 10, value: growth.days, format: value => `${value}日`, onInput: value => { growth.days = value; paint(); } });
         core.presets(ui.panel, [
           { id: "germinate", label: "発芽条件OK" }, { id: "no-water", label: "水なし" }, { id: "no-light", label: "日光なし" }, { id: "hot-temp", label: "高温" }
         ], applyPreset);
@@ -371,17 +409,30 @@
     }
 
     function paint() { mode === "growth" ? paintGrowth() : paintFlower(); }
+    playbackControl = core.playback(ui.actions, { interval: 900, onStateChange: playing => ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }), onStep: () => {
+      if (mode === "growth") {
+        if (growth.days >= 10) return false;
+        growth.days += 1;
+        growthDayRange?.set(growth.days);
+      } else {
+        if (flower.days >= 7) return false;
+        flower.days += 1;
+        flowerDayRange?.set(flower.days);
+      }
+      paint();
+      return mode === "growth" ? growth.days < 10 : flower.days < 7;
+    } });
     core.action(ui.actions, "1日進める", () => {
       if (mode === "growth") growth.days = Math.min(10, growth.days + 1);
       else flower.days = Math.min(7, flower.days + 1);
       addModeControls();
       paint();
     }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初に戻す", () => { playbackControl?.stop(); Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
     ui.note.textContent = "数値や成長の速さは条件を比べるための模型上の目安です。実際の発芽日数や草丈を予測するものではありません。発芽条件と、その後の成長条件を分けて見ましょう。";
     addModeControls();
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl?.destroy(); ui.destroy(); };
   }
 
   window.RikaFiveSimulations.plants = { mount };
@@ -454,11 +505,12 @@
     }
 
     buildControls();
+    const playbackControl = core.playback(ui.actions, { interval: 850, onStateChange: playing => ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }), onStep: () => { if (state.days >= 10) return false; state.days += 1; dayRange.set(state.days); paint(); return state.days < 10; } });
     core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); dayRange.set(state.days); paint(); }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初に戻す", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "卵の中の変化は学習用に簡略化しています。実際の発生速度や形を正確に再現したものではありません。日数を少しずつ変えて、変化のつながりを観察しましょう。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.animals = { mount };
 })();
@@ -546,10 +598,11 @@
     buildControls();
     advanceButton = core.action(ui.actions, "1時間進める", () => { if (!state.motion) return; state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
     advanceButton.disabled = !state.motion;
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); if (advanceButton) advanceButton.disabled = !state.motion; paint(); }, "secondary-button");
+    const playbackControl = core.playback(ui.actions, { interval: 850, onStateChange: playing => { ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }); advanceButton.disabled = playing || !state.motion; }, onStep: () => { if (!state.motion || state.time >= 8) return false; state.time += 1; timeRange.set(state.time); paint(); return state.time < 8; } });
+    core.action(ui.actions, "最初にもどす", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); if (advanceButton) advanceButton.disabled = !state.motion; paint(); }, "secondary-button");
     ui.note.textContent = "雲の進む向きを比べる簡易モデルです。実際の雲や天気の変化を正確に予測するものではありません。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.weather = { mount };
 })();
@@ -632,12 +685,13 @@
       core.presets(ui.panel, [{ id: "erosion", label: "速い流れ" }, { id: "deposit", label: "ゆるやかな流れ" }, { id: "gravel", label: "れきを運ぶ" }], id => { Object.assign(state, id === "deposit" ? { ...DEFAULT, speed: 1, slope: 1, amount: 2 } : id === "gravel" ? { ...DEFAULT, speed: 4, slope: 4, amount: 4, sediment: "gravel" } : { ...DEFAULT, speed: 5, slope: 4, amount: 4 }); buildControls(); paint(); });
     }
     buildControls();
+    const playbackControl = core.playback(ui.actions, { interval: 650, onStateChange: playing => ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }), onStep: () => { if (state.time >= 20) return false; state.time = Math.min(20, state.time + 1); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); return state.time < 20; } });
     core.action(ui.actions, "水を流す", () => { state.time = Math.min(20, state.time + 2); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); }, "primary-button");
     core.action(ui.actions, "時間を進める", () => { state.time = Math.min(20, state.time + 1); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); }, "secondary-button");
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "けずる・運ぶ・たい積する働きの違いを比べる簡易モデルです。数値は実測値ではなく、実際の川の変化を正確に予測するものではありません。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.river = { mount };
 })();
@@ -740,12 +794,13 @@
       core.presets(ui.panel, [{ id: "stir", label: "かき混ぜる" }, { id: "hot", label: "温度を上げる" }, { id: "alum", label: "ミョウバン" }], id => { Object.assign(state, id === "stir" ? { ...DEFAULT, stirred: true, time: 4 } : id === "hot" ? { ...DEFAULT, temperature: 70, time: 8 } : { ...DEFAULT, substance: "alum", temperature: 60, time: 8 }); buildControls(); paint(); });
     }
     buildControls();
+    const playbackControl = core.playback(ui.actions, { interval: 800, onStateChange: playing => { ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }); if (evaporateButton) evaporateButton.disabled = playing; }, onStep: () => { if (state.time >= 10) return false; state.time = Math.min(10, state.time + 1); state.evaporated = false; timeRange.set(state.time); paint(); return state.time < 10; } });
     core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 2); timeRange.set(state.time); paint(); }, "primary-button");
     evaporateButton = core.action(ui.actions, "水を蒸発させる", () => { state.evaporated = !state.evaporated; paint(); }, "secondary-button");
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "数値は水の量・温度・物質による違いを比べるための模型上の目安です。実際の溶解度や溶ける速さを正確に再現した値ではありません。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.solutions = { mount };
 })();
@@ -907,11 +962,11 @@
   "use strict";
 
   const MANIFESTS = {
-    plants: { id: "plants", title: "植物LAB", unit: "植物の発芽と成長", summary: "発芽に必要な条件と、成長・受粉の変化を時間で見ます。", accent: "#3f8052", script: "labs/plants-lab.js?v=plant-germination-progress-20261011" },
-    animals: { id: "animals", title: "魚のたんじょうLAB", unit: "メダカ・人のたんじょう", summary: "卵の中の変化を日ごとに進め、ふ化から稚魚まで観察します。", accent: "#397aa7", script: "labs/animals-lab.js" },
-    weather: { id: "weather", title: "天気LAB", unit: "天気の変化", summary: "雲の動きと観察地点を変えて、天気の移り変わりを見ます。", accent: "#5883a0", script: "labs/weather-lab.js?v=weather-direction-accessibility-20261011" },
-    river: { id: "river", title: "流れる水LAB", unit: "流れる水のはたらき", summary: "水を流し、けずる・運ぶ・たい積する場所の変化を見ます。", accent: "#2d86a6", script: "labs/river-lab.js?v=river-flow-count-display-20261011" },
-    solutions: { id: "solutions", title: "もののとけ方LAB", unit: "物のとけ方", summary: "水の量・温度・物質を変えて、とける速さと量を比べます。", accent: "#80649b", script: "labs/solutions-lab.js?v=solution-water-level-20261011" },
+    plants: { id: "plants", title: "植物LAB", unit: "植物の発芽と成長", summary: "発芽に必要な条件と、成長・受粉の変化を時間で見ます。", accent: "#3f8052", script: "labs/plants-lab.js?v=plant-playback-20261011" },
+    animals: { id: "animals", title: "魚のたんじょうLAB", unit: "メダカ・人のたんじょう", summary: "卵の中の変化を日ごとに進め、ふ化から稚魚まで観察します。", accent: "#397aa7", script: "labs/animals-lab.js?v=animal-playback-20261011" },
+    weather: { id: "weather", title: "天気LAB", unit: "天気の変化", summary: "雲の動きと観察地点を変えて、天気の移り変わりを見ます。", accent: "#5883a0", script: "labs/weather-lab.js?v=weather-playback-20261011" },
+    river: { id: "river", title: "流れる水LAB", unit: "流れる水のはたらき", summary: "水を流し、けずる・運ぶ・たい積する場所の変化を見ます。", accent: "#2d86a6", script: "labs/river-lab.js?v=river-playback-20261011" },
+    solutions: { id: "solutions", title: "もののとけ方LAB", unit: "物のとけ方", summary: "水の量・温度・物質を変えて、とける速さと量を比べます。", accent: "#80649b", script: "labs/solutions-lab.js?v=solution-playback-20261011" },
     electromagnet: { id: "electromagnet", title: "電磁石LAB", unit: "電流がつくる磁力", summary: "コイル・電流・鉄心を変えて、電磁石の強さを見ます。", accent: "#bd8a13", script: "labs/electromagnet-lab.js?v=electromagnet-strength-range-20261011" },
     pendulum: { id: "pendulum", title: "ふりこLAB", unit: "ふりこの運動", summary: "長さ・重さ・振れ幅を変えて、1往復の時間を比べます。", accent: "#7565a3", script: "labs/pendulum-lab.js" }
   };
@@ -947,7 +1002,7 @@
     if (!manifest) { root.innerHTML = `<section class="empty-state"><h1>このLABはまだありません</h1><button class="primary-button" type="button" data-lab-home>一覧へ戻る</button></section>`; return null; }
     root.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">${manifest.title.slice(0, 1)}</span><h1>${manifest.title}を準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
     try {
-      if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=randomizer-mode-selectors-20261011");
+      if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=playback-controls-20261011");
       if (requestSequence !== renderSequence) return null;
       // labs/*.js を正本として読み込み、app.js 内の旧実装より最新の実装を優先する。
       await loadScript(manifest.script);
