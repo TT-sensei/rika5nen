@@ -23,6 +23,7 @@
           <div><p class="eyebrow">SIMULATION LAB / ${esc(manifest.unit)}</p><h1>${esc(manifest.title)}</h1><p>${esc(manifest.summary)}</p></div>
           <button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button>
         </header>
+        <section class="investigation-guide" aria-label="調べ方"><p><strong>条件を変えて、結果のちがいを見つけよう</strong><span>一度に変える条件は1つだけにすると、何が関係したのか考えやすいよ。</span></p><ol><li><b>1</b><span>まず予想</span></li><li><b>2</b><span>条件を変える</span></li><li><b>3</b><span>AとBを比べる</span></li></ol></section>
         <div class="lab-workspace">
           <section class="simulation-column" aria-label="シミュレーション">
             <div class="sim-stage" data-sim-stage></div>
@@ -566,7 +567,7 @@
       const dissolved = i < dissolvedCount;
       const x = 290 + (i * 47) % 180;
       const y = 176 + (i * 31) % 95;
-      return `<circle class="solution-dot ${dissolved ? "dissolved" : "leftover"}" cx="${x}" cy="${y}" r="${dissolved ? 4 : 6}"/>`;
+      return `<circle class="solution-dot ${dissolved ? "dissolved" : "leftover"}" cx="${x}" cy="${y}" r="${dissolved ? 4 : 6}" style="--delay:${(i % 7) * -.28}s"/>`;
     }).join("");
     if (state.evaporated) return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水を蒸発させた後に物質が残るシミュレーション"><rect width="760" height="360" fill="#fbf6ed"/><ellipse class="dish" cx="380" cy="250" rx="190" ry="35"/><path class="dish-side" d="M190 250q25 65 190 65t190-65"/><g class="crystals">${Array.from({ length: Math.min(28, Math.ceil(model.dissolved + model.leftover)) }, (_, i) => `<rect x="${250 + (i * 43) % 260}" y="${220 - (i % 4) * 9}" width="${8 + i % 5}" height="${8 + i % 4}" rx="2"/>`).join("")}</g><text class="solution-title" x="380" y="55" text-anchor="middle">水を蒸発させたあと</text><text class="solution-caption" x="380" y="335" text-anchor="middle">とけていた物質が、結晶として残る</text></svg>`;
     return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水に物質がとけるシミュレーション"><defs><linearGradient id="solution-water" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#d5f2f4"/><stop offset="1" stop-color="#8ccbd3"/></linearGradient></defs><rect width="760" height="360" fill="#eef8f8"/><path class="beaker" d="M260 55h240M278 55v215q0 28 28 28h108q28 0 28-28V55"/><path class="beaker-water" d="M279 160h202v111q0 27-27 27H306q-27 0-27-27Z" fill="url(#solution-water)"/>${particles}<text class="solution-title" x="380" y="35" text-anchor="middle">${SUBSTANCES.find(item => item.id === state.substance).label}が水に広がる</text><text class="solution-caption" x="380" y="335" text-anchor="middle">${state.stirred ? "かき混ぜている" : "かき混ぜていない"}　・　${state.temperature}℃</text></svg>`;
