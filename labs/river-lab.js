@@ -44,7 +44,11 @@
     function paint() {
       const result = model(state);
       ui.stage.innerHTML = riverSvg(state, result);
-      let message = result.erosion > result.deposition ? "流れが速いほど、けずる・運ぶ力が大きくなります。" : "流れがゆるやかな場所では、運ばれた土砂がたい積します。";
+      let message = !state.flow
+        ? "まだ水は流れていません。「水を流す」を押して、川の形や土砂の動きを観察しよう。"
+        : result.erosion > result.deposition
+          ? "この条件では、けずる働きがたい積より大きくなっています。速さや傾きを変えて比べよう。"
+          : "この条件では、たい積する働きが目立ちます。流れの速さや川幅を変えて比べよう。";;
       if (state.flow) message += " 水を流した回数が増えるほど、川の形の変化も大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "けずる働き（指標）", value: `${result.erosion}/100` },
