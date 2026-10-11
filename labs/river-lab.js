@@ -75,12 +75,13 @@
       core.presets(ui.panel, [{ id: "erosion", label: "速い流れ" }, { id: "deposit", label: "ゆるやかな流れ" }, { id: "gravel", label: "れきを運ぶ" }], id => { Object.assign(state, id === "deposit" ? { ...DEFAULT, speed: 1, slope: 1, amount: 2 } : id === "gravel" ? { ...DEFAULT, speed: 4, slope: 4, amount: 4, sediment: "gravel" } : { ...DEFAULT, speed: 5, slope: 4, amount: 4 }); buildControls(); paint(); });
     }
     buildControls();
+    const playbackControl = core.playback(ui.actions, { interval: 650, onStateChange: playing => ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }), onStep: () => { if (state.time >= 20) return false; state.time = Math.min(20, state.time + 1); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); return state.time < 20; } });
     core.action(ui.actions, "水を流す", () => { state.time = Math.min(20, state.time + 2); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); }, "primary-button");
     core.action(ui.actions, "時間を進める", () => { state.time = Math.min(20, state.time + 1); state.flow = Math.floor(state.time / 2); timeRange.set(state.time); paint(); }, "secondary-button");
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "けずる・運ぶ・たい積する働きの違いを比べる簡易モデルです。数値は実測値ではなく、実際の川の変化を正確に予測するものではありません。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.river = { mount };
 })();
