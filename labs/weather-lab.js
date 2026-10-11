@@ -41,6 +41,7 @@
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
     let timeRange;
+    let windControl;
     function paint() {
       const stationIndex = STATIONS.findIndex(item => item.id === state.station);
       const current = weatherAt(state.time, stationIndex, state.wind, state.motion, state.frozenTime);
@@ -60,7 +61,15 @@
       const cloud = core.section(ui.panel, "雲の動き");
       core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; if (!state.motion) state.frozenTime = state.time; timeRange.input.disabled = !state.motion; if (advanceButton) advanceButton.disabled = !state.motion; paint(); } });
       const wind = core.section(ui.panel, "雲の進む向き");
-      core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
+      windControl = core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }], value: state.wind, onChange: value => {
+        if (!state.motion) {
+          windControl.set(state.wind);
+          ui.feedback.textContent = "雲を止めている間は、進む向きを変えられないよ。雲を動かしてから選んでね。";
+          return;
+        }
+        state.wind = value;
+        paint();
+      } });
       const map = core.section(ui.panel, "表示");
       core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
       const point = core.section(ui.panel, "観察地点");
