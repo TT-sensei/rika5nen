@@ -1004,7 +1004,7 @@
     if (!manifest) { root.innerHTML = `<section class="empty-state"><h1>このLABはまだありません</h1><button class="primary-button" type="button" data-lab-home>一覧へ戻る</button></section>`; return null; }
     root.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">${manifest.title.slice(0, 1)}</span><h1>${manifest.title}を準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
     try {
-      if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=playback-controls-20261011");
+      if (!window.RikaFiveLabCore || typeof window.RikaFiveLabCore.playback !== "function") await loadScript("labs/lab-core.js?v=playback-core-compat-20261011");
       if (requestSequence !== renderSequence) return null;
       // labs/*.js を正本として読み込み、app.js 内の旧実装より最新の実装を優先する。
       await loadScript(manifest.script);
