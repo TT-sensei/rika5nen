@@ -62,8 +62,15 @@
   }
 
   function randomizeOneCondition(ui) {
-    const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')];
-    const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => !group.closest("[hidden]") && [...group.querySelectorAll("button")].filter(button => !button.disabled).length > 1);
+    // 表示切替や測定回数ではなく、自然の条件・実験条件を優先して選ぶ。
+    const isObservationOnly = label => /^(倍率|観察倍率|振る回数|測る回数|天気図|動き)$/.test(String(label || "").replace(/\s/g, ""));
+    const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')]
+      .filter(input => !isObservationOnly(input.closest(".range-control")?.querySelector("span")?.firstChild?.textContent.trim()));
+    const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => {
+      if (group.closest("[hidden]")) return false;
+      const label = group.querySelector(":scope > span")?.textContent.trim();
+      return !isObservationOnly(label) && [...group.querySelectorAll("button")].filter(button => !button.disabled).length > 1;
+    });
     const choices = [...ranges.map(input => ({ type: "range", input })), ...groups.map(group => ({ type: "choice", group }))];
     if (!choices.length) { ui.feedback.textContent = "この画面では、変えられる条件がまだないよ。"; return; }
     const selected = choices[Math.floor(Math.random() * choices.length)];

@@ -7,9 +7,11 @@
   function model(state) {
     const energy = state.speed * state.slope * state.amount / 5;
     const resistance = state.sediment === "gravel" ? 1.25 : state.sediment === "mud" ? .7 : 1;
-    const erosion = Math.min(100, Math.round(energy * 7 * resistance + state.flow * 4));
-    const transport = Math.min(100, Math.round((state.speed * state.amount * 5 + state.flow * 3) * resistance));
-    const deposition = Math.min(100, Math.max(0, Math.round((6 - state.speed) * 12 + (6 - state.slope) * 5 + state.width * 2 - state.flow * 2)));
+    // 水を流していない間は、けずる・運ぶ・たい積する変化は起きない。
+    // 条件の指標も図と同じく、流し始めてから計算する。
+    const erosion = state.flow > 0 ? Math.min(100, Math.round(energy * 7 * resistance + state.flow * 4)) : 0;
+    const transport = state.flow > 0 ? Math.min(100, Math.round((state.speed * state.amount * 5 + state.flow * 3) * resistance)) : 0;
+    const deposition = state.flow > 0 ? Math.min(100, Math.max(0, Math.round((6 - state.speed) * 12 + (6 - state.slope) * 5 + state.width * 2 - state.flow * 2))) : 0;
     return { energy, erosion, transport, deposition };
   }
 
