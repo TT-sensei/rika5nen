@@ -7,3 +7,8 @@
 @keyframes river-current{to{stroke-dashoffset:-46}}@keyframes river-sediment-drift{to{transform:translate(15px,3px)}}@keyframes solution-particle-drift{to{transform:translate(5px,-4px)}}
 @media(max-width:760px){.investigation-guide{align-items:stretch;flex-direction:column;gap:9px;padding:11px}.investigation-guide ol{gap:5px}.investigation-guide li{flex:1;justify-content:center;padding:6px 4px;font-size:.62rem}.comparison-grid{grid-template-columns:1fr}.comparison-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.comparison-card>p{font-size:.72rem}}
 @media(prefers-reduced-motion:reduce){.river-flow-line,.river-particle,.solution-dot.dissolved{animation:none!important}}
+
+
+/* Small discovery feedback for casual, repeated exploration */
+.randomizer-feedback{margin:7px 0 0;padding:9px 12px;border:1px solid #dce8e1;border-radius:10px;background:#fffdf3;color:#31574a;font-size:.78rem;line-height:1.5;min-height:2.6em}
+.randomizer-button{min-height:44px}
