@@ -117,8 +117,8 @@
       } else {
         const pollen = core.section(ui.panel, "受粉を操作", "花粉の移動を試してみよう");
         core.action(pollen, "虫が花粉を運ぶ", () => { flower.pollen = true; flower.source = "虫"; flower.days = 0; flowerDayRange?.set(0); paint(); }, "control-action");
-        core.action(pollen, "人が花粉をつける", () => { flower.pollen = true; flower.source = "人"; flower.days = 0; paint(); }, "control-action");
-        core.action(pollen, "花粉をつけない", () => { flower.pollen = false; flower.source = "なし"; flower.days = 0; paint(); }, "control-action");
+        core.action(pollen, "人が花粉をつける", () => { flower.pollen = true; flower.source = "人"; flower.days = 0; flowerDayRange?.set(0); paint(); }, "control-action");
+        core.action(pollen, "花粉をつけない", () => { flower.pollen = false; flower.source = "なし"; flower.days = 0; flowerDayRange?.set(0); paint(); }, "control-action");
         const time = core.section(ui.panel, "時間を進める");
         flowerDayRange = core.range(time, { label: "経過日数", min: 0, max: 7, value: flower.days, format: value => `${value}日`, onInput: value => { flower.days = value; paint(); } });
         core.presets(ui.panel, [{ id: "pollinate", label: "人が受粉" }, { id: "no-pollinate", label: "受粉なし" }], applyPreset);
