@@ -56,7 +56,33 @@
       }
     };
     enableComparison(ui);
+    action(ui.actions, "🎲 条件をランダムに1つ変える", () => randomizeOneCondition(ui), "secondary-button randomize-button");
     return ui;
+  }
+
+  function randomizeOneCondition(ui) {
+    const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]')];
+    const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => group.querySelectorAll("button").length > 1);
+    const choices = [...ranges.map(input => ({ type: "range", input })), ...groups.map(group => ({ type: "choice", group }))];
+    if (!choices.length) return;
+    const selected = choices[Math.floor(Math.random() * choices.length)];
+    if (selected.type === "range") {
+      const input = selected.input;
+      const min = Number(input.min);
+      const max = Number(input.max);
+      const step = Number(input.step) || 1;
+      const values = [];
+      for (let value = min; value <= max + step / 100; value += step) {
+        if (Math.abs(value - Number(input.value)) > step / 100) values.push(Number(value.toFixed(6)));
+      }
+      if (values.length) {
+        input.value = values[Math.floor(Math.random() * values.length)];
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      return;
+    }
+    const buttons = [...selected.group.querySelectorAll("button")].filter(button => button.getAttribute("aria-pressed") !== "true");
+    if (buttons.length) buttons[Math.floor(Math.random() * buttons.length)].click();
   }
 
   function conditionSummary(panel) {
