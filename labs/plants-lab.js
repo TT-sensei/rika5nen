@@ -74,11 +74,17 @@
       const model = growthModel(growth);
       ui.stage.innerHTML = plantSvg(growth, model);
       const status = model.germination >= 1 ? "発芽した" : model.germination > 0 ? "発芽の途中" : "まだ発芽していない";
-      const message = !model.canGerminate
-        ? "発芽には、水・空気・適した温度が必要です。"
+      const missing = [];
+      if (!growth.water) missing.push("水");
+      if (!growth.air) missing.push("空気");
+      if (!model.temperatureOk) missing.push("適した温度");
+      const message = missing.length
+        ? `今は「${missing.join("・")}」の条件が合わないため、発芽しません。条件を1つずつ変えて確かめよう。`
         : !growth.light && growth.days > 3
           ? "発芽はしても、日光がないと成長は小さくなります。発芽と成長を分けて見ましょう。"
-          : "発芽に必要な条件と、その後の成長に関係する条件を分けて確認できます。";
+          : model.germination < 1
+            ? "水・空気・適した温度がそろっているよ。日数を進めて、発芽までの変化を見てみよう。"
+            : "発芽したね。ここからは日光がある場合とない場合で、成長の違いを比べてみよう。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "発芽", value: status },
         { label: "根", value: `${Math.round(model.germination * 100)}%` },
@@ -89,9 +95,13 @@
     function paintFlower() {
       ui.stage.innerHTML = flowerSvg(flower);
       const result = flower.pollen ? (flower.days >= 5 ? "実と種子ができた" : flower.days >= 3 ? "実ができた" : "実になる途中") : "実ができない";
-      const message = flower.pollen
-        ? "花粉がめしべにつく受粉があると、時間がたって実や種子ができます。"
-        : "受粉していない花では、実ができる変化は見られません。";
+      const message = !flower.pollen
+        ? "受粉していないため、日数を進めても実や種子はできません。受粉ありと比べてみよう。"
+        : flower.days < 3
+          ? "受粉しても、すぐに実ができるわけではありません。日数を進めて変化を観察しよう。"
+          : flower.days < 5
+            ? "実ができ始めたよ。さらに日数を進めると、実の中に種子が見えてくるよ。"
+            : "実の中に種子ができたね。受粉の有無と経過日数を変えて比べてみよう。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "受粉", value: flower.pollen ? `あり（${flower.source}）` : "なし" },
         { label: "経過", value: `${flower.days}日` },
