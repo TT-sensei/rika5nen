@@ -385,3 +385,7 @@ body{background:radial-gradient(circle at 90% 0,#d7f2df 0,transparent 30rem),var
 @media (min-width:761px) and (max-width:900px){.lab-workspace{grid-template-columns:1fr}.sim-stage{min-height:380px}[data-control-panel]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}[data-control-panel]>.control-section{margin:0}[data-control-panel]>.preset-section{grid-column:1/-1}}
 @media (max-width:760px){.lab-screen{width:calc(100% - 1rem)}.lab-workspace{grid-template-columns:1fr;gap:10px}.sim-stage{min-height:280px}.control-panel{padding:12px;overflow:visible}[data-control-panel]{display:block}[data-control-panel]>.control-section{margin:8px 0 0}.range-control input{min-height:36px;height:36px}.segmented-control button,.control-action,.preset-button{min-height:44px;font-size:.78rem}.sim-actions button{min-height:44px}}
 @media (max-width:430px){.sim-stage{min-height:240px}.lab-titlebar h1{font-size:1.2rem}.instant-metric span{font-size:.62rem}.instant-metric b{font-size:.76rem}}
+
+
+/* Undissolved material settles at the bottom of the beaker */
+.solution-dot.leftover{fill:#d47b50;stroke:#a85d39;stroke-width:1.5}
