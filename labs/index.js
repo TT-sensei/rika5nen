@@ -41,11 +41,17 @@
     const manifest = MANIFESTS[id];
     if (!manifest) { root.innerHTML = `<section class="empty-state"><h1>このLABはまだありません</h1><button class="primary-button" type="button" data-lab-home>一覧へ戻る</button></section>`; return null; }
     root.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">${manifest.title.slice(0, 1)}</span><h1>${manifest.title}を準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
-    if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=randomizer-condition-only-20261011");
-    if (requestSequence !== renderSequence) return null;
-    // labs/*.js を正本として読み込み、app.js 内の旧実装より最新の実装を優先する。
-    await loadScript(manifest.script);
-    if (requestSequence !== renderSequence) return null;
+    try {
+      if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=randomizer-condition-only-20261011");
+      if (requestSequence !== renderSequence) return null;
+      // labs/*.js を正本として読み込み、app.js 内の旧実装より最新の実装を優先する。
+      await loadScript(manifest.script);
+      if (requestSequence !== renderSequence) return null;
+    } catch (error) {
+      // 古い画面の読み込み失敗で、移動先の画面をエラー表示に上書きしない。
+      if (requestSequence !== renderSequence) return null;
+      throw error;
+    }
     const factory = window.RikaFiveSimulations?.[id];
     if (!factory) throw new Error("Simulation factory missing");
     activeCleanup = factory.mount(root, { core: window.RikaFiveLabCore, host, manifest }) || null;
