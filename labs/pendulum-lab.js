@@ -26,6 +26,7 @@
     const state = { ...DEFAULT };
     let animationFrame = 0;
     let calculateButton;
+    let swingButton;
     const animate = () => {
       if (!state.measuring) return;
       paint();
@@ -40,6 +41,7 @@
     function paint() {
       const result = model(state);
       if (calculateButton) calculateButton.textContent = `${state.count}往復の時間を計算`;
+      if (swingButton) swingButton.textContent = state.measuring ? "Ⅱ 止める" : "▶ 振らせる";
       ui.stage.innerHTML = pendulumSvg(state, result);
       let message;
       if (state.length !== DEFAULT.length) message = "ふりこの長さを長くすると、1往復する時間が長くなります。";
@@ -70,7 +72,7 @@
       state.measuring = false;
     };
     calculateButton = core.action(ui.actions, `${state.count}往復の時間を計算`, () => { const result = model(state); state.measured = result.total; freezePendulum(); cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
-    core.action(ui.actions, "振らせる / 止める", () => {
+    swingButton = core.action(ui.actions, "▶ 振らせる", () => {
       if (state.measuring) freezePendulum();
       else { state.phase = -Math.PI / 2; state.phaseStartedAt = Date.now(); state.measuring = true; }
       paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate);
