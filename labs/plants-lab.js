@@ -139,7 +139,7 @@
       paint();
     }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "発芽のモデルは、水・空気・適した温度を発芽条件、日光を発芽後の成長条件として分けて表示しています。";
+    ui.note.textContent = "数値や成長の速さは条件を比べるための模型上の目安です。実際の発芽日数や草丈を予測するものではありません。発芽条件と、その後の成長条件を分けて見ましょう。";
     addModeControls();
     paint();
     return () => ui.destroy();
