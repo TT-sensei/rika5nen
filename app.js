@@ -79,7 +79,7 @@
 
   function randomizeOneCondition(ui) {
     // 表示切替や測定回数ではなく、自然の条件・実験条件を優先して選ぶ。
-    const isObservationOnly = label => /^(LAB|倍率|観察倍率|振る回数|測る回数|天気図|動き|地点|観察地点|表示|見る内容)$/.test(String(label || "").replace(/\s/g, ""));
+    const isObservationOnly = label => /^(LAB|モード|倍率|観察倍率|振る回数|測る回数|天気図|動き|地点|観察地点|表示|見る内容)$/.test(String(label || "").replace(/\s/g, ""));
     const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')]
       .filter(input => !isObservationOnly(input.closest(".range-control")?.querySelector("span")?.firstChild?.textContent.trim()) && hasAlternativeRangeValue(input));
     const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => {
