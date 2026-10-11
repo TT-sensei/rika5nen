@@ -43,11 +43,11 @@
       else if (model.leftover > 0) message = `この条件では${model.leftover}gがとけ残ります。水の量や温度を変えると、とける量も変わります。`;
       else message = "この時間では、入れた物質がすべて水に広がっています。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "とけた量", value: `${model.dissolved}g` },
-        { label: "とけ残り", value: `${model.leftover}g` },
-        { label: "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
-        { label: "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
-        { label: "水溶液全体の重さ", value: `${state.water + state.amount}g` }
+        { label: state.evaporated ? "蒸発前にとけた量" : "とけた量", value: `${model.dissolved}g` },
+        { label: state.evaporated ? "蒸発前のとけ残り" : "とけ残り", value: `${model.leftover}g` },
+        { label: state.evaporated ? "蒸発前の溶解度の目安" : "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
+        { label: state.evaporated ? "蒸発前の状態" : "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
+        { label: state.evaporated ? "蒸発後に残る物質" : "水溶液全体の重さ", value: `${state.evaporated ? state.amount : state.water + state.amount}g` }
       ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃` });
       if (evaporateButton) evaporateButton.textContent = state.evaporated ? "水に戻す" : "水を蒸発させる";
     }
