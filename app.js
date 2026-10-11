@@ -440,7 +440,7 @@
         { label: "観察地点", value: STATIONS[stationIndex].label },
         { label: "現在の天気", value: current },
         { label: "経過", value: `${state.time}時間後` }
-      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `雲の進む向きを${direction}にすると、各地点の天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `風向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
+      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `雲の進む向きを${direction}にすると、各地点の天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `雲の進む向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
@@ -717,7 +717,7 @@
         { label: "1往復の時間", value: `${result.period}秒` },
         { label: `${state.count}往復の時間`, value: `${result.total}秒` },
         { label: "計算値", value: state.measured ? `${state.measured}秒` : "まだ計算していない" }
-      ], message, note: "測定は、同じ条件で同じ回数を比べるための目安です。" });
+      ], message, note: "表示される時間は、条件から求めた計算上の目安です。実際に振って測った時間ではありません。" });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
