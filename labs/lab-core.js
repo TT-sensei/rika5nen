@@ -16,7 +16,7 @@
           <div><p class="eyebrow">SIMULATION LAB / ${esc(manifest.unit)}</p><h1>${esc(manifest.title)}</h1><p>${esc(manifest.summary)}</p></div>
           <button class="secondary-button lab-back" type="button" data-lab-home>一覧へ戻る</button>
         </header>
-        <div class="lab-workspace">
+        <section class="investigation-guide" aria-label="調べ方"><p><strong>条件を変えて、結果のちがいを見つけよう</strong><span>一度に変える条件は1つだけにすると、何が関係したのか考えやすいよ。</span></p><ol><li><b>1</b><span>まず予想</span></li><li><b>2</b><span>条件を変える</span></li><li><b>3</b><span>AとBを比べる</span></li></ol></section>\n        <div class="lab-workspace">
           <section class="simulation-column" aria-label="シミュレーション">
             <div class="sim-stage" data-sim-stage></div>
             <div class="sim-readout" data-sim-readout aria-live="polite"></div>
