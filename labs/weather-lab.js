@@ -16,7 +16,7 @@
 
   function cloudPosition(state) {
     const effectiveTime = state.motion ? state.time : state.frozenTime;
-    return state.wind === "west-east" ? Math.min(650, 115 + effectiveTime * 67) : Math.max(110, 645 - effectiveTime * 67);
+    return state.wind === "west-east" ? Math.min(650, 170 + effectiveTime * 105) : Math.max(110, 590 - effectiveTime * 105);
   }
 
   function weatherSvg(state) {
