@@ -59,7 +59,7 @@
     </g>`;
     return `<svg class="flower-sim-svg" viewBox="0 0 760 360" role="img" aria-label="受粉した花と受粉していない花の比較">
       <rect width="760" height="360" fill="#fff8ed"/><path class="flower-divider" d="M380 55v260"/><text class="flower-title" x="380" y="32" text-anchor="middle">花粉がめしべにつくと、時間とともに実になる</text>
-      ${flower(190, "受粉あり", state.pollen)}${flower(570, "受粉なし", false)}
+      ${flower(190, state.pollen ? "受粉あり" : "操作する花", state.pollen)}${flower(570, "受粉なし", false)}
     </svg>`;
   }
 
