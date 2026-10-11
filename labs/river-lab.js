@@ -56,7 +56,7 @@
       const sediment = core.section(ui.panel, "土砂の種類");
       core.options(sediment, { label: "土砂", values: SEDIMENTS, value: state.sediment, onChange: value => { state.sediment = value; paint(); } });
       const time = core.section(ui.panel, "時間");
-      timeRange = core.range(time, { label: "経過時間", min: 0, max: 10, value: state.time, format: value => `${value}分`, onInput: value => { state.time = value; state.flow = Math.max(state.flow, Math.floor(value / 2)); paint(); } });
+      timeRange = core.range(time, { label: "経過時間", min: 0, max: 10, value: state.time, format: value => `${value}分`, onInput: value => { state.time = value; state.flow = Math.floor(value / 2); paint(); } });
       core.presets(ui.panel, [{ id: "erosion", label: "速い流れ" }, { id: "deposit", label: "ゆるやかな流れ" }, { id: "gravel", label: "れきを運ぶ" }], id => { Object.assign(state, id === "deposit" ? { ...DEFAULT, speed: 1, slope: 1, amount: 2 } : id === "gravel" ? { ...DEFAULT, speed: 4, slope: 4, amount: 4, sediment: "gravel" } : { ...DEFAULT, speed: 5, slope: 4, amount: 4 }); buildControls(); paint(); });
     }
     buildControls();
