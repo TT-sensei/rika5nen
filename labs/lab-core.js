@@ -72,7 +72,7 @@
 
   function randomizeOneCondition(ui) {
     // 表示切替や測定回数ではなく、自然の条件・実験条件を優先して選ぶ。
-    const isObservationOnly = label => /^(倍率|観察倍率|振る回数|測る回数|天気図|動き)$/.test(String(label || "").replace(/\s/g, ""));
+    const isObservationOnly = label => /^(LAB|倍率|観察倍率|振る回数|測る回数|天気図|動き|地点|観察地点|表示|見る内容)$/.test(String(label || "").replace(/\s/g, ""));
     const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')]
       .filter(input => !isObservationOnly(input.closest(".range-control")?.querySelector("span")?.firstChild?.textContent.trim()) && hasAlternativeRangeValue(input));
     const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => {
@@ -129,9 +129,11 @@
 
     const snapshot = () => ({
       conditions: conditionSummary(ui.panel),
+      message: ui.readout.querySelector(".instant-result p")?.textContent.trim() || "",
+      note: ui.readout.querySelector(".instant-note")?.textContent.trim() || "",
       metrics: ui.readout.querySelector(".instant-readout-grid")?.innerHTML || ""
     });
-    const card = (label, data, current = false) => `<section class="comparison-card${current ? " is-current" : ""}"><strong>${label}</strong><p>${esc(data.conditions || "条件を操作して結果を確かめよう")}</p><div class="comparison-metrics">${data.metrics}</div></section>`;
+    const card = (label, data, current = false) => `<section class="comparison-card${current ? " is-current" : ""}"><strong>${label}</strong><p>${esc(data.conditions || "条件を操作して結果を確かめよう")}</p><p class="comparison-result">${esc(data.message || "結果を確かめよう")}</p>${data.note ? `<p class="comparison-note">${esc(data.note)}</p>` : ""}<div class="comparison-metrics">${data.metrics}</div></section>`;
     const update = () => {
       if (!saved) return;
       ui.comparison.innerHTML = `<div class="comparison-head"><b>AとBをくらべる</b><span>条件を1つ変えると、結果の違いが見つけやすいよ</span><button type="button" data-compare-clear>閉じる</button></div><div class="comparison-grid">${card("A 保存した結果", saved)}${card("B いまの結果", snapshot(), true)}</div>`;
