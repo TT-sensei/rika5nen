@@ -68,11 +68,20 @@
     return ui;
   }
 
+  function hasAlternativeRangeValue(input) {
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const step = Number(input.step) || 1;
+    // 選択肢が1つしかないスライダーを候補にすると、
+    // ランダム変更が空振りして、ほかの条件も試せなくなる。
+    return Number.isFinite(min) && Number.isFinite(max) && step > 0 && max - min >= step - step / 100;
+  }
+
   function randomizeOneCondition(ui) {
     // 表示切替や測定回数ではなく、自然の条件・実験条件を優先して選ぶ。
     const isObservationOnly = label => /^(倍率|観察倍率|振る回数|測る回数|天気図|動き)$/.test(String(label || "").replace(/\s/g, ""));
     const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')]
-      .filter(input => !isObservationOnly(input.closest(".range-control")?.querySelector("span")?.firstChild?.textContent.trim()));
+      .filter(input => !isObservationOnly(input.closest(".range-control")?.querySelector("span")?.firstChild?.textContent.trim()) && hasAlternativeRangeValue(input));
     const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => {
       if (group.closest("[hidden]")) return false;
       const label = group.querySelector(":scope > span")?.textContent.trim();
