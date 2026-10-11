@@ -52,7 +52,7 @@
     const fruitGrowing = state.pollen && state.days >= 1;
     const flower = (x, label, pollinated) => `<g transform="translate(${x} 0)">
       <path class="flower-stem" d="M0 264 V160"/><ellipse class="flower-leaf" cx="-31" cy="225" rx="34" ry="13" transform="rotate(-22 -31 225)"/><ellipse class="flower-leaf" cx="31" cy="203" rx="34" ry="13" transform="rotate(22 31 203)"/>
-      ${fruitReady && pollinated ? `<ellipse class="flower-fruit" cx="0" cy="198" rx="34" ry="40"/><path class="fruit-line" d="M0 160v-18"/>` : `<g class="flower-head"><circle cx="0" cy="137" r="24"/>${[0,60,120,180,240,300].map(angle => `<ellipse cx="0" cy="101" rx="16" ry="32" transform="rotate(${angle} 0 137)"/>`).join("")}</g><path class="flower-pistil" d="M0 160v-50"/>`}
+      ${fruitReady && pollinated ? `<ellipse class="flower-fruit" cx="0" cy="198" rx="34" ry="40"/><path class="fruit-line" d="M0 160v-18"/>${seedsReady ? '<ellipse class="fruit-seed" cx="-12" cy="190" rx="3" ry="5"/><ellipse class="fruit-seed" cx="0" cy="201" rx="3" ry="5"/><ellipse class="fruit-seed" cx="12" cy="190" rx="3" ry="5"/><ellipse class="fruit-seed" cx="-7" cy="212" rx="3" ry="5"/><ellipse class="fruit-seed" cx="8" cy="213" rx="3" ry="5"/>' : ""}` : `<g class="flower-head"><circle cx="0" cy="137" r="24"/>${[0,60,120,180,240,300].map(angle => `<ellipse cx="0" cy="101" rx="16" ry="32" transform="rotate(${angle} 0 137)"/>`).join("")}</g><path class="flower-pistil" d="M0 160v-50"/>`}
       ${pollinated ? `<circle class="pollen-cloud" cx="0" cy="105" r="${fruitGrowing ? 5 : 9}"/>` : ""}
       <text class="flower-label" x="0" y="306" text-anchor="middle">${label}</text>
       <text class="flower-state" x="0" y="330" text-anchor="middle">${pollinated ? (seedsReady ? "実と種子ができた" : fruitReady ? "実ができた" : "受粉した") : "受粉していない"}</text>
@@ -115,9 +115,9 @@
         ], applyPreset);
       } else {
         const pollen = core.section(ui.panel, "受粉を操作", "花粉の移動を試してみよう");
-        core.action(pollen, "虫が花粉を運ぶ", () => { flower.pollen = true; flower.source = "虫"; paint(); }, "control-action");
-        core.action(pollen, "人が花粉をつける", () => { flower.pollen = true; flower.source = "人"; paint(); }, "control-action");
-        core.action(pollen, "花粉をつけない", () => { flower.pollen = false; flower.source = "なし"; paint(); }, "control-action");
+        core.action(pollen, "虫が花粉を運ぶ", () => { flower.pollen = true; flower.source = "虫"; flower.days = 0; paint(); }, "control-action");
+        core.action(pollen, "人が花粉をつける", () => { flower.pollen = true; flower.source = "人"; flower.days = 0; paint(); }, "control-action");
+        core.action(pollen, "花粉をつけない", () => { flower.pollen = false; flower.source = "なし"; flower.days = 0; paint(); }, "control-action");
         const time = core.section(ui.panel, "時間を進める");
         core.range(time, { label: "経過日数", min: 0, max: 7, value: flower.days, format: value => `${value}日`, onInput: value => { flower.days = value; paint(); } });
         core.presets(ui.panel, [{ id: "pollinate", label: "人が受粉" }, { id: "no-pollinate", label: "受粉なし" }], applyPreset);
