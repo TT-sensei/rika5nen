@@ -5,8 +5,8 @@
     plants: { id: "plants", title: "植物LAB", unit: "植物の発芽と成長", summary: "発芽に必要な条件と、成長・受粉の変化を時間で見ます。", accent: "#3f8052", script: "labs/plants-lab.js" },
     animals: { id: "animals", title: "魚のたんじょうLAB", unit: "メダカ・人のたんじょう", summary: "卵の中の変化を日ごとに進め、ふ化から稚魚まで観察します。", accent: "#397aa7", script: "labs/animals-lab.js" },
     weather: { id: "weather", title: "天気LAB", unit: "天気の変化", summary: "雲の動きと観察地点を変えて、天気の移り変わりを見ます。", accent: "#5883a0", script: "labs/weather-lab.js" },
-    river: { id: "river", title: "流れる水LAB", unit: "流れる水のはたらき", summary: "水を流し、けずる・運ぶ・たい積する場所の変化を見ます。", accent: "#2d86a6", script: "labs/river-lab.js?v=river-sediment-model-20261011" },
-    solutions: { id: "solutions", title: "もののとけ方LAB", unit: "物のとけ方", summary: "水の量・温度・物質を変えて、とける速さと量を比べます。", accent: "#80649b", script: "labs/solutions-lab.js?v=solubility-table-20261011" },
+    river: { id: "river", title: "流れる水LAB", unit: "流れる水のはたらき", summary: "水を流し、けずる・運ぶ・たい積する場所の変化を見ます。", accent: "#2d86a6", script: "labs/river-lab.js?v=river-first-minute-20261011" },
+    solutions: { id: "solutions", title: "もののとけ方LAB", unit: "物のとけ方", summary: "水の量・温度・物質を変えて、とける速さと量を比べます。", accent: "#80649b", script: "labs/solutions-lab.js?v=solution-water-level-20261011" },
     electromagnet: { id: "electromagnet", title: "電磁石LAB", unit: "電流がつくる磁力", summary: "コイル・電流・鉄心を変えて、電磁石の強さを見ます。", accent: "#bd8a13", script: "labs/electromagnet-lab.js?v=electromagnet-switch-sync-20261011" },
     pendulum: { id: "pendulum", title: "ふりこLAB", unit: "ふりこの運動", summary: "長さ・重さ・振れ幅を変えて、1往復の時間を比べます。", accent: "#7565a3", script: "labs/pendulum-lab.js" }
   };
