@@ -16,7 +16,7 @@
   }
 
   function riverSvg(state, result) {
-    const particleCount = Math.min(16, 4 + state.flow + state.speed);
+    const particleCount = state.flow > 0 ? Math.min(16, 4 + state.flow + state.speed) : 0;
     const flowDuration = Math.max(.45, 2.2 - state.speed * .3);
     const particles = Array.from({ length: particleCount }, (_, i) => {
       const x = 86 + (i * 43) % 590;
