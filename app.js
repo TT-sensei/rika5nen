@@ -311,7 +311,7 @@
       paint();
     }, "primary-button");
     core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "発芽のモデルは、水・空気・適した温度を発芽条件、日光を発芽後の成長条件として分けて表示しています。";
+    ui.note.textContent = "数値や成長の速さは条件を比べるための模型上の目安です。実際の発芽日数や草丈を予測するものではありません。発芽条件と、その後の成長条件を分けて見ましょう。";
     addModeControls();
     paint();
     return () => ui.destroy();
@@ -510,9 +510,9 @@
       let message = result.erosion > result.deposition ? "流れが速いほど、けずる・運ぶ力が大きくなります。" : "流れがゆるやかな場所では、運ばれた土砂がたい積します。";
       if (state.flow) message += " 水を流した回数が増えるほど、川の形の変化も大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "けずる力", value: `${result.erosion}/100` },
-        { label: "運ぶ土砂", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
-        { label: "たい積", value: `${result.deposition}/100` }
+        { label: "けずる働き（指標）", value: `${result.erosion}/100` },
+        { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
+        { label: "たい積（指標）", value: `${result.deposition}/100` }
       ], message, note: `水を流した回数：${state.flow}回　／　川幅：${state.width}` });
     }
     function buildControls() {
@@ -646,9 +646,9 @@
       ui.stage.innerHTML = magnetSvg(state, result);
       const message = !state.on ? "電流を切ると、電磁石の磁力はほとんどなくなります。" : state.core ? "コイルの巻き数・電流・鉄心を大きくすると、電磁石は強くなります。" : "鉄心を入れると、同じコイルと電流でも磁力の範囲が大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "電磁石の強さ", value: `${result.strength}/100` },
-        { label: "クリップ", value: `${result.clips}個` },
-        { label: "磁力の範囲", value: `${result.range}cm` }
+        { label: "強さ（模型値）", value: `${result.strength}/100` },
+        { label: "クリップ（目安）", value: `${result.clips}個` },
+        { label: "磁力の広がり", value: `${result.range}段階` }
       ], message, note: `電流：${state.current.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
     }
     function buildControls() {
@@ -666,7 +666,7 @@
     core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "電池の数は電流を大きくする要因として扱い、巻き数・電流・鉄心を変えたときの磁力の変化を比べます。";
+    ui.note.textContent = "強さ・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。実際の電流や磁力を測定した値ではありません。";
     paint();
     return () => ui.destroy();
   }
@@ -730,7 +730,7 @@
       core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); buildControls(); paint(); });
     }
     buildControls();
-    core.action(ui.actions, "10往復の時間を計算", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = true; countOptions.set(10); paint(); cancelAnimationFrame(animationFrame); animationFrame = requestAnimationFrame(animate); }, "primary-button");
+    core.action(ui.actions, "10往復の時間を計算", () => { const result = model({ ...state, count: 10 }); state.count = 10; state.measured = result.total; state.measuring = false; countOptions.set(10); cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
     core.action(ui.actions, "振らせる / 止める", () => { state.measuring = !state.measuring; paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); cancelAnimationFrame(animationFrame); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "ふりこの長さ・おもりの重さ・振れ幅を同時に変えず、一つずつ変化を確かめられるようにしています。";
