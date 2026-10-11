@@ -750,7 +750,7 @@
 (() => {
   "use strict";
   window.RikaFiveSimulations = window.RikaFiveSimulations || {};
-  const DEFAULT = { length: 40, weight: 100, amplitude: 15, count: 10, measuring: false, measured: 0 };
+  const DEFAULT = { length: 40, weight: 100, amplitude: 15, count: 10, measuring: false, measured: 0, phase: -Math.PI / 2, phaseStartedAt: 0 };
 
   function model(state) {
     const base = 2 * Math.PI * Math.sqrt((state.length / 100) / 9.8);
@@ -762,8 +762,8 @@
 
   function pendulumSvg(state, result) {
     // 表示上の揺れも、計算した周期に合わせる。長いふりこほどゆっくり動く。
-    const phase = Date.now() * 2 * Math.PI / (Math.max(0.1, result.period) * 1000);
-    const angle = state.measuring ? Math.sin(phase) * state.amplitude : -state.amplitude;
+    const phase = state.phase + (state.measuring ? (Date.now() - state.phaseStartedAt) * 2 * Math.PI / (Math.max(0.1, result.period) * 1000) : 0);
+    const angle = Math.sin(phase) * state.amplitude;
     const bobY = 100 + state.length * 1.8;
     const bobRadius = 18 + state.weight / 25;
     const stringLength = bobY - bobRadius - 70;
@@ -806,8 +806,18 @@
       core.presets(ui.panel, [{ id: "length", label: "長さを比べる" }, { id: "weight", label: "重さを比べる" }, { id: "amplitude", label: "振れ幅を比べる" }], id => { Object.assign(state, id === "length" ? { ...DEFAULT, length: 80 } : id === "weight" ? { ...DEFAULT, weight: 200 } : { ...DEFAULT, amplitude: 28 }); buildControls(); paint(); });
     }
     buildControls();
-    calculateButton = core.action(ui.actions, `${state.count}往復の時間を計算`, () => { const result = model(state); state.measured = result.total; state.measuring = false; cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
-    core.action(ui.actions, "振らせる / 止める", () => { state.measuring = !state.measuring; paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate); }, "secondary-button");
+    const freezePendulum = () => {
+      if (!state.measuring) return;
+      const result = model(state);
+      state.phase += (Date.now() - state.phaseStartedAt) * 2 * Math.PI / (Math.max(0.1, result.period) * 1000);
+      state.measuring = false;
+    };
+    calculateButton = core.action(ui.actions, `${state.count}往復の時間を計算`, () => { const result = model(state); state.measured = result.total; freezePendulum(); cancelAnimationFrame(animationFrame); paint(); }, "primary-button");
+    core.action(ui.actions, "振らせる / 止める", () => {
+      if (state.measuring) freezePendulum();
+      else { state.phase = -Math.PI / 2; state.phaseStartedAt = Date.now(); state.measuring = true; }
+      paint(); cancelAnimationFrame(animationFrame); if (state.measuring) animationFrame = requestAnimationFrame(animate);
+    }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); cancelAnimationFrame(animationFrame); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "ふりこの長さ・おもりの重さ・振れ幅を同時に変えず、一つずつ変化を確かめられるようにしています。";
     paint();
