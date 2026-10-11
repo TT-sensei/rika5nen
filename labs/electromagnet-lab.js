@@ -27,9 +27,9 @@
       ui.stage.innerHTML = magnetSvg(state, result);
       const message = !state.on ? "電流を切ると、電磁石の磁力はほとんどなくなります。" : state.core ? "コイルの巻き数・電流・鉄心を大きくすると、電磁石は強くなります。" : "鉄心を入れると、同じコイルと電流でも磁力の範囲が大きくなります。";
       core.renderReadout(ui.readout, { metrics: [
-        { label: "電磁石の強さ", value: `${result.strength}/100` },
-        { label: "クリップ", value: `${result.clips}個` },
-        { label: "磁力の範囲", value: `${result.range}cm` }
+        { label: "強さ（模型値）", value: `${result.strength}/100` },
+        { label: "クリップ（目安）", value: `${result.clips}個` },
+        { label: "磁力の広がり", value: `${result.range}段階` }
       ], message, note: `電流：${state.current.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
     }
     function buildControls() {
@@ -47,7 +47,7 @@
     core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "電池の数は電流を大きくする要因として扱い、巻き数・電流・鉄心を変えたときの磁力の変化を比べます。";
+    ui.note.textContent = "強さ・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。実際の電流や磁力を測定した値ではありません。";
     paint();
     return () => ui.destroy();
   }
