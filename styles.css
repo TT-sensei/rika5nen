@@ -389,3 +389,38 @@ body{background:radial-gradient(circle at 90% 0,#d7f2df 0,transparent 30rem),var
 
 /* Undissolved material settles at the bottom of the beaker */
 .solution-dot.leftover{fill:#d47b50;stroke:#a85d39;stroke-width:1.5}
+
+
+/* Simulator-first layout: let the experiment fill the screen, put controls below */
+.lab-workspace{display:flex;flex-direction:column;gap:14px}
+.simulation-column{order:0;min-width:0}
+.control-panel{order:1;width:100%;height:auto;max-height:none;overflow:visible}
+.sim-stage{height:clamp(480px,68vh,780px);min-height:480px;max-height:none}
+.sim-stage>svg,.sim-stage svg{width:100%;height:100%;display:block}
+.sim-readout{margin-top:10px}
+.sim-actions{flex-wrap:wrap}
+.control-heading{margin-bottom:8px}
+[data-control-panel]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+[data-control-panel]>.control-section{min-width:0;margin:0}
+[data-control-panel]>.preset-section{grid-column:1/-1}
+@media (min-width:1200px){
+  .lab-screen{width:min(1600px,calc(100% - 2.5rem))}
+  .sim-stage{height:clamp(560px,72vh,900px);min-height:560px}
+  .control-panel{padding:18px 20px}
+  [data-control-panel]{grid-template-columns:repeat(3,minmax(0,1fr))}
+  [data-control-panel]>.preset-section{grid-column:1/-1}
+}
+@media (min-width:761px) and (max-width:1199px){
+  .sim-stage{height:clamp(440px,62vh,680px);min-height:440px}
+  [data-control-panel]{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .lab-workspace{display:flex;flex-direction:column;gap:12px}
+  .sim-stage{height:clamp(340px,52svh,560px);min-height:340px}
+  .control-panel{padding:12px}
+  [data-control-panel]{display:block}
+  [data-control-panel]>.control-section{margin:8px 0 0}
+}
+@media (max-width:430px){
+  .sim-stage{height:clamp(320px,48svh,460px);min-height:320px}
+}
