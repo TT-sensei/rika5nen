@@ -12,3 +12,31 @@
 /* Small discovery feedback for casual, repeated exploration */
 .randomizer-feedback{margin:7px 0 0;padding:9px 12px;border:1px solid #dce8e1;border-radius:10px;background:#fffdf3;color:#31574a;font-size:.78rem;line-height:1.5;min-height:2.6em}
 .randomizer-button{min-height:44px}
+
+
+/* Living systems and forces: restrained motion makes the model easier to read */
+.instant-lab .sim-stage svg{shape-rendering:geometricPrecision}
+.plant-leaf{transform-box:fill-box;transform-origin:center;animation:plant-leaf-sway 4.8s ease-in-out infinite alternate}
+.plant-sun{transform-box:fill-box;transform-origin:center;animation:plant-sun-glow 4s ease-in-out infinite}
+.flower-head{transform-box:fill-box;transform-origin:center;animation:flower-bloom-breathe 3.8s ease-in-out infinite alternate}
+.pollen-cloud{animation:pollen-drift 2.8s ease-in-out infinite alternate}
+.flower-fruit{transform-box:fill-box;transform-origin:center;animation:fruit-grow-pulse 3.4s ease-in-out infinite alternate}
+.egg-cell{transform-box:fill-box;transform-origin:center;animation:cell-pulse 2.8s ease-in-out infinite alternate}
+.egg-fish,.fry{transform-box:fill-box;transform-origin:center;animation:fish-swim 3.2s ease-in-out infinite alternate}
+.weather-cloud{transform-box:fill-box;transform-origin:center;animation:cloud-breathe 5s ease-in-out infinite alternate}
+.magnetic-field{animation:field-flow 2.2s linear infinite,field-pulse 2.8s ease-in-out infinite alternate}
+.coil{animation:coil-current 2.4s ease-in-out infinite alternate}
+@keyframes plant-leaf-sway{to{transform:rotate(4deg) translateY(-1px)}}
+@keyframes plant-sun-glow{50%{opacity:.78}}
+@keyframes flower-bloom-breathe{to{transform:scale(1.025)}}
+@keyframes pollen-drift{to{transform:translate(5px,-3px)}}
+@keyframes fruit-grow-pulse{to{transform:scale(1.035)}}
+@keyframes cell-pulse{to{transform:scale(1.08);opacity:.86}}
+@keyframes fish-swim{to{transform:translateX(5px)}}
+@keyframes cloud-breathe{to{transform:translateY(-3px)}}
+@keyframes field-flow{to{stroke-dashoffset:-38}}
+@keyframes field-pulse{to{opacity:.8}}
+@keyframes coil-current{to{stroke:#e49a4d}}
+@media(prefers-reduced-motion:reduce){
+  .plant-leaf,.plant-sun,.flower-head,.pollen-cloud,.flower-fruit,.egg-cell,.egg-fish,.fry,.weather-cloud,.magnetic-field,.coil{animation:none!important}
+}
