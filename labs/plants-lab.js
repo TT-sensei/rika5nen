@@ -11,8 +11,11 @@
     const canGerminate = state.water && state.air && temperatureOk;
     const temperatureFactor = state.temperature >= 20 && state.temperature <= 30 ? 1 : .72;
     const germination = canGerminate ? Math.min(1, state.days / 3 * temperatureFactor) : 0;
-    const growthDays = Math.max(0, state.days - 3);
-    const growthFactor = state.water && temperatureOk ? (state.light ? 1 : .35) : 0;
+    // 成長は発芽が完了してから始める。発芽条件が欠けたときに、
+    // 図は種子のままなのに数値だけ成長する食い違いを防ぐ。
+    const germinationDays = 3 / temperatureFactor;
+    const growthDays = germination >= 1 ? Math.max(0, state.days - germinationDays) : 0;
+    const growthFactor = canGerminate && germination >= 1 ? (state.light ? 1 : .35) : 0;
     const height = Math.round(growthDays * 2.2 * growthFactor * 10) / 10;
     const leaves = Math.max(0, Math.min(5, Math.floor(growthDays * growthFactor / 2)));
     return { temperatureOk, canGerminate, germination, height, leaves };
