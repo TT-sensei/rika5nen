@@ -64,11 +64,12 @@
     }
 
     buildControls();
+    const playbackControl = core.playback(ui.actions, { interval: 850, onStateChange: playing => ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }), onStep: () => { if (state.days >= 10) return false; state.days += 1; dayRange.set(state.days); paint(); return state.days < 10; } });
     core.action(ui.actions, "1日進める", () => { state.days = Math.min(10, state.days + 1); dayRange.set(state.days); paint(); }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初に戻す", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "卵の中の変化は学習用に簡略化しています。実際の発生速度や形を正確に再現したものではありません。日数を少しずつ変えて、変化のつながりを観察しましょう。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.animals = { mount };
 })();

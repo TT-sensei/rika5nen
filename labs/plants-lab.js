@@ -69,6 +69,8 @@
     const growth = { ...DEFAULT_GROWTH };
     const flower = { ...DEFAULT_FLOWER };
     let flowerDayRange;
+    let growthDayRange;
+    let playbackControl;
 
     function paintGrowth() {
       const model = growthModel(growth);
@@ -120,7 +122,7 @@
         core.range(germination, { label: "温度", min: 5, max: 45, value: growth.temperature, format: value => `${value}℃`, onInput: value => { growth.temperature = value; paint(); } });
         const growthSection = core.section(ui.panel, "成長と時間");
         core.options(growthSection, { label: "日光", values: boolOption, value: growth.light ? "yes" : "no", onChange: value => { growth.light = value === "yes"; paint(); } });
-        core.range(growthSection, { label: "経過日数", min: 0, max: 10, value: growth.days, format: value => `${value}日`, onInput: value => { growth.days = value; paint(); } });
+        growthDayRange = core.range(growthSection, { label: "経過日数", min: 0, max: 10, value: growth.days, format: value => `${value}日`, onInput: value => { growth.days = value; paint(); } });
         core.presets(ui.panel, [
           { id: "germinate", label: "発芽条件OK" }, { id: "no-water", label: "水なし" }, { id: "no-light", label: "日光なし" }, { id: "hot-temp", label: "高温" }
         ], applyPreset);
@@ -146,17 +148,30 @@
     }
 
     function paint() { mode === "growth" ? paintGrowth() : paintFlower(); }
+    playbackControl = core.playback(ui.actions, { interval: 900, onStateChange: playing => ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }), onStep: () => {
+      if (mode === "growth") {
+        if (growth.days >= 10) return false;
+        growth.days += 1;
+        growthDayRange?.set(growth.days);
+      } else {
+        if (flower.days >= 7) return false;
+        flower.days += 1;
+        flowerDayRange?.set(flower.days);
+      }
+      paint();
+      return mode === "growth" ? growth.days < 10 : flower.days < 7;
+    } });
     core.action(ui.actions, "1日進める", () => {
       if (mode === "growth") growth.days = Math.min(10, growth.days + 1);
       else flower.days = Math.min(7, flower.days + 1);
       addModeControls();
       paint();
     }, "primary-button");
-    core.action(ui.actions, "最初に戻す", () => { Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初に戻す", () => { playbackControl?.stop(); Object.assign(growth, DEFAULT_GROWTH); Object.assign(flower, DEFAULT_FLOWER); addModeControls(); paint(); }, "secondary-button");
     ui.note.textContent = "数値や成長の速さは条件を比べるための模型上の目安です。実際の発芽日数や草丈を予測するものではありません。発芽条件と、その後の成長条件を分けて見ましょう。";
     addModeControls();
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl?.destroy(); ui.destroy(); };
   }
 
   window.RikaFiveSimulations.plants = { mount };
