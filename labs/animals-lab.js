@@ -19,7 +19,7 @@
     const fry = stage.hatched ? `<path class="fry" d="M319 179c42-33 107-19 127 4-24 32-84 38-127 6l-45 18 23-27-13-31z"/><circle class="egg-eye" cx="407" cy="178" r="7"/>` : "";
     return `<svg class="egg-sim-svg" viewBox="0 0 760 360" role="img" aria-label="メダカの卵が成長するシミュレーション">
       <rect width="760" height="360" fill="#eef8fb"/><path class="water-line" d="M0 78q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/><path class="water-line second" d="M0 306q45-20 90 0t90 0 90 0 90 0 90 0 90 0 90 0"/>
-      ${!stage.hatched ? `<circle class="egg-shell" cx="380" cy="175" r="${eggR}"/><g transform="translate(${(1 - scale) * 150} ${(1 - scale) * 80}) scale(${scale})">${cells}${body}</g>` : fry}
+      ${!stage.hatched ? `<circle class="egg-shell" cx="380" cy="175" r="${eggR}"/><g transform="translate(380 175) scale(${scale}) translate(-380 -175)">${cells}${body}</g>` : `<g transform="translate(380 175) scale(${scale}) translate(-380 -175)">${fry}</g>`}
       <text class="egg-title" x="380" y="42" text-anchor="middle">${stage.name}</text><text class="egg-caption" x="380" y="314" text-anchor="middle">${stage.detail}</text>
       ${stage.eyes ? `<text class="egg-callout" x="535" y="120">目が見える</text>` : ""}${stage.hatched ? `<text class="egg-callout" x="535" y="235">ふ化して稚魚に</text>` : ""}
     </svg>`;
