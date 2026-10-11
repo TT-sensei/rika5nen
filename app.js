@@ -714,6 +714,7 @@
   function mount(root, { core, host, manifest }) {
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
+    let currentSwitch;
     function paint() {
       const result = model(state);
       ui.stage.innerHTML = magnetSvg(state, result);
@@ -732,11 +733,11 @@
       core.options(coil, { label: "電池の数", values: [{ id: "1", label: "1個" }, { id: "2", label: "2個" }, { id: "3", label: "3個" }], value: state.batteries, onChange: value => { state.batteries = Number(value); paint(); } });
       const coreSection = core.section(ui.panel, "鉄心と電流");
       core.options(coreSection, { label: "鉄心", values: [{ id: "yes", label: "あり" }, { id: "no", label: "なし" }], value: state.core ? "yes" : "no", onChange: value => { state.core = value === "yes"; paint(); } });
-      core.options(coreSection, { label: "電流", values: [{ id: "on", label: "流す" }, { id: "off", label: "切る" }], value: state.on ? "on" : "off", onChange: value => { state.on = value === "on"; paint(); } });
+      currentSwitch = core.options(coreSection, { label: "電流", values: [{ id: "on", label: "流す" }, { id: "off", label: "切る" }], value: state.on ? "on" : "off", onChange: value => { state.on = value === "on"; paint(); } });
       core.presets(ui.panel, [{ id: "turns", label: "巻き数UP" }, { id: "iron", label: "鉄心あり" }, { id: "off", label: "電流を切る" }], id => { Object.assign(state, id === "turns" ? { ...DEFAULT, turns: 220 } : id === "iron" ? { ...DEFAULT, core: true } : { ...DEFAULT, on: false }); buildControls(); paint(); });
     }
     buildControls();
-    core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
+    core.action(ui.actions, "5秒流す", () => { state.on = true; currentSwitch?.set("on"); state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "強さ・電流・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。電池の数と電流の関係も簡略化しており、実際に測定した値ではありません。";
