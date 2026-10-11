@@ -39,7 +39,8 @@
     if (!manifest) { root.innerHTML = `<section class="empty-state"><h1>このLABはまだありません</h1><button class="primary-button" type="button" data-lab-home>一覧へ戻る</button></section>`; return null; }
     root.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">${manifest.title.slice(0, 1)}</span><h1>${manifest.title}を準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
     if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js");
-    if (!window.RikaFiveSimulations?.[id]) await loadScript(manifest.script);
+    // labs/*.js を正本として必ず読み込み、app.js 内の旧バンドルより最新の実装を優先する。
+    await loadScript(manifest.script);
     const factory = window.RikaFiveSimulations?.[id];
     if (!factory) throw new Error("Simulation factory missing");
     activeCleanup = factory.mount(root, { core: window.RikaFiveLabCore, host, manifest }) || null;
