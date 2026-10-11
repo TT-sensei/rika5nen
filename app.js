@@ -391,13 +391,13 @@
 (() => {
   "use strict";
   window.RikaFiveSimulations = window.RikaFiveSimulations || {};
-  const DEFAULT = { time: 0, motion: true, wind: "west-east", map: true, station: "central" };
+  const DEFAULT = { time: 0, frozenTime: 0, motion: true, wind: "west-east", map: true, station: "central" };
   const STATIONS = [{ id: "west", label: "西の地点", x: 170 }, { id: "central", label: "中央の地点", x: 380 }, { id: "east", label: "東の地点", x: 590 }];
 
-  function weatherAt(time, stationIndex, direction, motion) {
-    if (!motion || direction === "north") return "晴れ";
+  function weatherAt(time, stationIndex, direction, motion, frozenTime = time) {
+    const effectiveTime = motion ? time : frozenTime;
     const arrival = direction === "west-east" ? stationIndex * 2 : (2 - stationIndex) * 2;
-    const delta = time - arrival;
+    const delta = effectiveTime - arrival;
     if (delta < 0) return "晴れ";
     if (delta < 2) return "くもり";
     if (delta < 4) return "雨";
@@ -405,15 +405,15 @@
   }
 
   function cloudPosition(state) {
-    if (!state.motion || state.wind === "north") return 380;
-    return state.wind === "west-east" ? Math.min(650, 115 + state.time * 67) : Math.max(110, 645 - state.time * 67);
+    const effectiveTime = state.motion ? state.time : state.frozenTime;
+    return state.wind === "west-east" ? Math.min(650, 115 + effectiveTime * 67) : Math.max(110, 645 - effectiveTime * 67);
   }
 
   function weatherSvg(state) {
     const cloudX = cloudPosition(state);
-    const directionLabel = state.wind === "west-east" ? "西 → 東" : state.wind === "east-west" ? "東 → 西" : "南 → 北";
+    const directionLabel = state.wind === "west-east" ? "西 → 東" : "東 → 西";
     const stationMarkup = STATIONS.map((station, index) => {
-      const value = weatherAt(state.time, index, state.wind, state.motion);
+      const value = weatherAt(state.time, index, state.wind, state.motion, state.frozenTime);
       const selected = station.id === state.station;
       return `<g class="weather-station ${selected ? "selected" : ""}"><circle cx="${station.x}" cy="234" r="${selected ? 18 : 13}"/><text x="${station.x}" y="276" text-anchor="middle">${station.label}</text><text class="weather-value" x="${station.x}" y="216" text-anchor="middle">${value}</text></g>`;
     }).join("");
@@ -433,32 +433,35 @@
     let timeRange;
     function paint() {
       const stationIndex = STATIONS.findIndex(item => item.id === state.station);
-      const current = weatherAt(state.time, stationIndex, state.wind, state.motion);
-      const direction = state.wind === "west-east" ? "西から東" : state.wind === "east-west" ? "東から西" : "南から北";
+      const current = weatherAt(state.time, stationIndex, state.wind, state.motion, state.frozenTime);
+      const direction = state.wind === "west-east" ? "西から東" : "東から西";
       ui.stage.innerHTML = weatherSvg(state);
       core.renderReadout(ui.readout, { metrics: [
         { label: "観察地点", value: STATIONS[stationIndex].label },
         { label: "現在の天気", value: current },
-        { label: "経過", value: `${state.time}時間後` }
-      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `雲の進む向きを${direction}にすると、各地点の天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `雲の進む向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
+        { label: "経過", value: `${state.motion ? state.time : state.frozenTime}時間後` }
+      ], message: state.motion ? `雲と天気は${direction}へ変化していきます。` : "雲を止めると、その時点の雲の位置と各地点の天気が保たれます。", note: `雲の進む向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
       const time = core.section(ui.panel, "時間を進める");
       timeRange = core.range(time, { label: "経過時間", min: 0, max: 8, value: state.time, format: value => `${value}時間後`, onInput: value => { state.time = value; paint(); } });
+      timeRange.input.disabled = !state.motion;
       const cloud = core.section(ui.panel, "雲の動き");
-      core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; paint(); } });
+      core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; if (!state.motion) state.frozenTime = state.time; timeRange.input.disabled = !state.motion; if (advanceButton) advanceButton.disabled = !state.motion; paint(); } });
       const wind = core.section(ui.panel, "雲の進む向き");
-      core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }, { id: "north", label: "南→北" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
+      core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
       const map = core.section(ui.panel, "表示");
       core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
       const point = core.section(ui.panel, "観察地点");
       core.options(point, { label: "地点", values: STATIONS.map(item => ({ id: item.id, label: item.label.replace("の地点", "") })), value: state.station, onChange: value => { state.station = value; paint(); } });
-      core.presets(ui.panel, [{ id: "normal", label: "西→東" }, { id: "reverse", label: "東→西" }, { id: "map", label: "天気図ON" }], id => { Object.assign(state, id === "reverse" ? { ...DEFAULT, wind: "east-west", time: 3 } : id === "map" ? { ...DEFAULT, time: 2, map: true } : { ...DEFAULT, time: 3 }); buildControls(); paint(); });
+      core.presets(ui.panel, [{ id: "normal", label: "西→東" }, { id: "reverse", label: "東→西" }, { id: "map", label: "天気図ON" }], id => { Object.assign(state, id === "reverse" ? { ...DEFAULT, wind: "east-west", time: 3 } : id === "map" ? { ...DEFAULT, time: 2, map: true } : { ...DEFAULT, time: 3 }); buildControls(); if (advanceButton) advanceButton.disabled = !state.motion; paint(); });
     }
+    let advanceButton;
     buildControls();
-    core.action(ui.actions, "1時間進める", () => { state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    advanceButton = core.action(ui.actions, "1時間進める", () => { if (!state.motion) return; state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
+    advanceButton.disabled = !state.motion;
+    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); if (advanceButton) advanceButton.disabled = !state.motion; paint(); }, "secondary-button");
     ui.note.textContent = "雲の進む向きを比べる簡易モデルです。実際の雲や天気の変化を正確に予測するものではありません。";
     paint();
     return () => ui.destroy();
