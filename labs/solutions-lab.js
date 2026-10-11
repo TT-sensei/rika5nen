@@ -95,12 +95,13 @@
       core.presets(ui.panel, [{ id: "stir", label: "かき混ぜる" }, { id: "hot", label: "温度を上げる" }, { id: "alum", label: "ミョウバン" }], id => { Object.assign(state, id === "stir" ? { ...DEFAULT, stirred: true, time: 4 } : id === "hot" ? { ...DEFAULT, temperature: 70, time: 8 } : { ...DEFAULT, substance: "alum", temperature: 60, time: 8 }); buildControls(); paint(); });
     }
     buildControls();
+    const playbackControl = core.playback(ui.actions, { interval: 800, onStateChange: playing => { ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }); if (evaporateButton) evaporateButton.disabled = playing; }, onStep: () => { if (state.time >= 10) return false; state.time = Math.min(10, state.time + 1); state.evaporated = false; timeRange.set(state.time); paint(); return state.time < 10; } });
     core.action(ui.actions, "時間を進める", () => { state.time = Math.min(10, state.time + 2); timeRange.set(state.time); paint(); }, "primary-button");
     evaporateButton = core.action(ui.actions, "水を蒸発させる", () => { state.evaporated = !state.evaporated; paint(); }, "secondary-button");
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
+    core.action(ui.actions, "最初にもどす", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "数値は水の量・温度・物質による違いを比べるための模型上の目安です。実際の溶解度や溶ける速さを正確に再現した値ではありません。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.solutions = { mount };
 })();
