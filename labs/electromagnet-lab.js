@@ -4,11 +4,13 @@
   const DEFAULT = { turns: 100, current: .5, batteries: 1, core: true, on: true, time: 0 };
 
   function model(state) {
+    // 電池の数が増えるほど電流が大きくなる、条件比較用の簡易モデル。
     const batteryFactor = .8 + state.batteries * .2;
-    const strength = state.on ? Math.min(100, Math.round(state.turns / 2.5 * state.current * batteryFactor * (state.core ? 1.45 : .55))) : 0;
+    const effectiveCurrent = state.current * batteryFactor;
+    const strength = state.on ? Math.min(100, Math.round(state.turns / 2.5 * effectiveCurrent * (state.core ? 1.45 : .55))) : 0;
     const clips = Math.min(20, Math.floor(strength / 8));
     const range = Math.round(strength / 12);
-    return { strength, clips, range };
+    return { strength, clips, range, effectiveCurrent };
   }
 
   function magnetSvg(state, result) {
@@ -36,13 +38,13 @@
         { label: "強さ（模型値）", value: `${result.strength}/100` },
         { label: "クリップ（目安）", value: `${result.clips}個` },
         { label: "磁力の広がり", value: `${result.range}段階` }
-      ], message, note: `電流：${state.current.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
+      ], message, note: `電流（模型値）：${result.effectiveCurrent.toFixed(1)}A　／　電池：${state.batteries}個　／　流した時間：${state.time}秒` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
-      const coil = core.section(ui.panel, "コイルと電流");
+      const coil = core.section(ui.panel, "コイルと電流", "この模型では、電池を増やすと電流も大きくなるよ。");
       core.range(coil, { label: "コイルの巻き数", min: 50, max: 250, step: 10, value: state.turns, format: value => `${value}回`, onInput: value => { state.turns = value; paint(); } });
-      core.range(coil, { label: "電流の強さ", min: .1, max: 1, step: .1, value: state.current, format: value => `${Number(value).toFixed(1)}A`, onInput: value => { state.current = value; paint(); } });
+      core.range(coil, { label: "電流の調整", min: .1, max: 1, step: .1, value: state.current, format: value => `${Number(value).toFixed(1)}A`, onInput: value => { state.current = value; paint(); } });
       core.options(coil, { label: "電池の数", values: [{ id: "1", label: "1個" }, { id: "2", label: "2個" }, { id: "3", label: "3個" }], value: state.batteries, onChange: value => { state.batteries = Number(value); paint(); } });
       const coreSection = core.section(ui.panel, "鉄心と電流");
       core.options(coreSection, { label: "鉄心", values: [{ id: "yes", label: "あり" }, { id: "no", label: "なし" }], value: state.core ? "yes" : "no", onChange: value => { state.core = value === "yes"; paint(); } });
@@ -53,7 +55,7 @@
     core.action(ui.actions, "5秒流す", () => { state.on = true; state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
     core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
-    ui.note.textContent = "強さ・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。実際の電流や磁力を測定した値ではありません。";
+    ui.note.textContent = "強さ・電流・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。電池の数と電流の関係も簡略化しており、実際に測定した値ではありません。";
     paint();
     return () => ui.destroy();
   }
