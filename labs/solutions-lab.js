@@ -4,8 +4,29 @@
   const DEFAULT = { water: 100, temperature: 25, amount: 20, stirred: false, substance: "salt", time: 5, evaporated: false };
   const SUBSTANCES = [{ id: "salt", label: "食塩" }, { id: "alum", label: "ミョウバン" }];
 
+  // 水100gあたりにとける量の概算表（g）。点の間は直線補間する。
+  // 食塩は温度による変化が小さく、ミョウバンは高温で大きく増える特徴を表す。
+  // 教材用の概算であり、実験値・製品の溶解度を保証するものではない。
+  const SOLUBILITY = {
+    salt: [[10, 36], [20, 36], [40, 37], [60, 37], [80, 38]],
+    alum: [[10, 9], [20, 11], [30, 14], [40, 19], [50, 28], [60, 45], [70, 65], [80, 95]]
+  };
+
   function capacity(state) {
-    const per100 = state.substance === "salt" ? 36 + (state.temperature - 20) * .06 : Math.max(4, 10 + (state.temperature - 20) * .9);
+    const table = SOLUBILITY[state.substance] || SOLUBILITY.salt;
+    const temperature = Math.max(table[0][0], Math.min(table[table.length - 1][0], state.temperature));
+    let lower = table[0];
+    let upper = table[table.length - 1];
+    for (let i = 1; i < table.length; i += 1) {
+      if (temperature <= table[i][0]) {
+        lower = table[i - 1];
+        upper = table[i];
+        break;
+      }
+    }
+    const ratio = (temperature - lower[0]) / (upper[0] - lower[0] || 1);
+    const per100 = lower[1] + (upper[1] - lower[1]) * ratio;
+    // 水は約1g/mLとして扱う簡易モデル。
     return Math.max(1, Math.round(per100 * state.water / 100));
   }
   function solutionModel(state) {
