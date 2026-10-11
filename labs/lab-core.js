@@ -22,7 +22,7 @@
             <div class="sim-stage" data-sim-stage></div>
             <div class="sim-readout" data-sim-readout aria-live="polite"></div>
             <div class="sim-comparison" data-sim-comparison hidden></div>
-            <div class="sim-actions" data-sim-actions></div>
+            <div class="sim-actions" data-sim-actions></div><p class="randomizer-feedback" data-randomizer-feedback aria-live="polite">🎲 ボタンを押すと、条件が1つ変わるよ。</p>
           </section>
           <aside class="control-panel instant-panel" aria-label="条件操作">
             <div class="control-heading"><p class="eyebrow">TRY IT</p><h2>条件を変えてみよう</h2><p>動かすと、図と結果がすぐ変わります。</p></div>
@@ -47,6 +47,7 @@
       readout: view.querySelector("[data-sim-readout]"),
       comparison: view.querySelector("[data-sim-comparison]"),
       actions: view.querySelector("[data-sim-actions]"),
+      feedback: view.querySelector("[data-randomizer-feedback]"),
       panel: view.querySelector("[data-control-panel]"),
       note: view.querySelector("[data-model-note]"),
       on,
@@ -64,25 +65,31 @@
     const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]')];
     const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => group.querySelectorAll("button").length > 1);
     const choices = [...ranges.map(input => ({ type: "range", input })), ...groups.map(group => ({ type: "choice", group }))];
-    if (!choices.length) return;
+    if (!choices.length) { ui.feedback.textContent = "この画面では、変えられる条件がまだないよ。"; return; }
     const selected = choices[Math.floor(Math.random() * choices.length)];
+    const before = [...ui.readout.querySelectorAll(".instant-metric")].map(metric => ({ label: metric.querySelector("span")?.textContent.trim() || "", value: metric.querySelector("b")?.textContent.trim() || "" }));
+    let changedLabel = "";
     if (selected.type === "range") {
       const input = selected.input;
-      const min = Number(input.min);
-      const max = Number(input.max);
-      const step = Number(input.step) || 1;
+      changedLabel = input.closest(".range-control")?.querySelector("span")?.firstChild?.textContent.trim() || "条件";
+      const min = Number(input.min), max = Number(input.max), step = Number(input.step) || 1;
       const values = [];
-      for (let value = min; value <= max + step / 100; value += step) {
-        if (Math.abs(value - Number(input.value)) > step / 100) values.push(Number(value.toFixed(6)));
-      }
-      if (values.length) {
-        input.value = values[Math.floor(Math.random() * values.length)];
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      return;
+      for (let value = min; value <= max + step / 100; value += step) if (Math.abs(value - Number(input.value)) > step / 100) values.push(Number(value.toFixed(6)));
+      if (!values.length) { ui.feedback.textContent = "「" + changedLabel + "」は、もう動かせる範囲がないみたい。別の条件を試そう。"; return; }
+      input.value = values[Math.floor(Math.random() * values.length)];
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    } else {
+      changedLabel = selected.group.querySelector(":scope > span")?.textContent.trim() || "条件";
+      const buttons = [...selected.group.querySelectorAll("button")].filter(button => button.getAttribute("aria-pressed") !== "true");
+      if (!buttons.length) return;
+      buttons[Math.floor(Math.random() * buttons.length)].click();
     }
-    const buttons = [...selected.group.querySelectorAll("button")].filter(button => button.getAttribute("aria-pressed") !== "true");
-    if (buttons.length) buttons[Math.floor(Math.random() * buttons.length)].click();
+    const after = [...ui.readout.querySelectorAll(".instant-metric")].map(metric => ({ label: metric.querySelector("span")?.textContent.trim() || "", value: metric.querySelector("b")?.textContent.trim() || "" }));
+    const changedMetric = after.find(metric => before.some(old => old.label === metric.label && old.value !== metric.value));
+    if (changedMetric) {
+      const previous = before.find(old => old.label === changedMetric.label)?.value || "—";
+      ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたよ。へぇ！ " + changedMetric.label + " が " + previous + " → " + changedMetric.value + " に変わった！";
+    } else { ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたよ。図や数値にどんな変化が出たか見てみよう！"; }
   }
 
   function conditionSummary(panel) {
