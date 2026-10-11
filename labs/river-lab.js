@@ -19,7 +19,7 @@
   }
 
   function riverSvg(state, result) {
-    const particleCount = state.flow > 0 ? Math.min(16, 4 + state.flow + state.speed) : 0;
+    const particleCount = state.flow > 0 ? Math.min(16, Math.max(2, Math.ceil(result.transport / 7))) : 0;
     const flowDuration = Math.max(.45, 2.2 - state.speed * .3);
     const particles = Array.from({ length: particleCount }, (_, i) => {
       const x = 86 + (i * 43) % 590;
@@ -50,9 +50,11 @@
       let message = !state.flow
         ? "まだ水は流れていません。「水を流す」を押して、川の形や土砂の動きを観察しよう。"
         : result.erosion > result.deposition
-          ? "この条件では、けずる働きがたい積より大きくなっています。速さや傾きを変えて比べよう。"
-          : "この条件では、たい積する働きが目立ちます。流れの速さや川幅を変えて比べよう。";
-      if (state.flow) message += " 水を流した回数が増えるほど、川の形の変化も大きくなります。";
+          ? "この条件では、けずる働きの指標が、たい積の指標より大きくなっています。速さや傾きを変えて比べよう。"
+          : result.erosion < result.deposition
+            ? "この条件では、たい積の指標が、けずる働きの指標より大きくなっています。速さや川幅を変えて比べよう。"
+            : "この条件では、けずる働きとたい積の指標が同じです。速さや傾きを変えて比べよう。";
+      if (state.flow) message += ` 運ぶ働きの指標は ${result.transport}/100 です。水を流す回数を増やして、図の土砂の動きと比べよう。`;
       core.renderReadout(ui.readout, { metrics: [
         { label: "けずる働き（指標）", value: `${result.erosion}/100` },
         { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
