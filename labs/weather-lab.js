@@ -50,7 +50,7 @@
         { label: "観察地点", value: STATIONS[stationIndex].label },
         { label: "現在の天気", value: current },
         { label: "経過", value: `${state.time}時間後` }
-      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `雲の進む向きを${direction}にすると、各地点の天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `風向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
+      ], message: state.motion && state.wind === "west-east" ? "雲と天気は、西から東へ変化していきます。" : state.motion ? `雲の進む向きを${direction}にすると、各地点の天気の順番も変わります。` : "雲を止めると、各地点の天気の変化も止まります。", note: `雲の進む向き：${direction}　／　天気図：${state.map ? "表示" : "非表示"}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
