@@ -63,7 +63,7 @@
 
   function randomizeOneCondition(ui) {
     const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')];
-    const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => group.querySelectorAll("button").length > 1);
+    const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => !group.closest("[hidden]") && [...group.querySelectorAll("button")].filter(button => !button.disabled).length > 1);
     const choices = [...ranges.map(input => ({ type: "range", input })), ...groups.map(group => ({ type: "choice", group }))];
     if (!choices.length) { ui.feedback.textContent = "この画面では、変えられる条件がまだないよ。"; return; }
     const selected = choices[Math.floor(Math.random() * choices.length)];
@@ -80,7 +80,7 @@
       input.dispatchEvent(new Event("input", { bubbles: true }));
     } else {
       changedLabel = selected.group.querySelector(":scope > span")?.textContent.trim() || "条件";
-      const buttons = [...selected.group.querySelectorAll("button")].filter(button => button.getAttribute("aria-pressed") !== "true");
+      const buttons = [...selected.group.querySelectorAll("button")].filter(button => !button.disabled && button.getAttribute("aria-pressed") !== "true");
       if (!buttons.length) return;
       buttons[Math.floor(Math.random() * buttons.length)].click();
     }
