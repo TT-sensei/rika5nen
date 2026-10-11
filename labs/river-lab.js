@@ -10,16 +10,16 @@
     // れきは重く運ばれにくく、細かな泥は流れに乗りやすいという傾向を表す簡易モデル。
     const erosionFactor = state.sediment === "gravel" ? .75 : state.sediment === "mud" ? .7 : 1;
     const transportFactor = state.sediment === "gravel" ? .55 : state.sediment === "mud" ? 1.15 : 1;
-    // 水を流していない間は、けずる・運ぶ・たい積する変化は起きない。
+    // 経過時間が0の間は、けずる・運ぶ・たい積する変化は起きない。
     // 条件の指標も図と同じく、流し始めてから計算する。
-    const erosion = state.flow > 0 ? Math.min(100, Math.round(energy * 7 * erosionFactor + state.flow * 4)) : 0;
-    const transport = state.flow > 0 ? Math.min(100, Math.round((state.speed * state.amount * 5 + state.flow * 3) * transportFactor)) : 0;
-    const deposition = state.flow > 0 ? Math.min(100, Math.max(0, Math.round((6 - state.speed) * 12 + (6 - state.slope) * 5 + state.width * 2 - state.flow * 2))) : 0;
+    const erosion = state.time > 0 ? Math.min(100, Math.round(energy * 7 * erosionFactor + state.flow * 4)) : 0;
+    const transport = state.time > 0 ? Math.min(100, Math.round((state.speed * state.amount * 5 + state.flow * 3) * transportFactor)) : 0;
+    const deposition = state.time > 0 ? Math.min(100, Math.max(0, Math.round((6 - state.speed) * 12 + (6 - state.slope) * 5 + state.width * 2 - state.flow * 2))) : 0;
     return { energy, erosion, transport, deposition };
   }
 
   function riverSvg(state, result) {
-    const particleCount = state.flow > 0 ? Math.min(16, Math.max(2, Math.ceil(result.transport / 7))) : 0;
+    const particleCount = state.time > 0 ? Math.min(16, Math.max(2, Math.ceil(result.transport / 7))) : 0;
     const flowDuration = Math.max(.45, 2.2 - state.speed * .3);
     const particles = Array.from({ length: particleCount }, (_, i) => {
       const x = 86 + (i * 43) % 590;
@@ -28,8 +28,8 @@
     }).join("");
     // 水を流すまでは、川岸のけずれ・土砂のたい積を描かない。
     // 川幅・水量・流速の条件が、図にも見えるように反映する。
-    const deposit = state.flow > 0 ? Math.min(105, result.deposition * .9 * Math.min(1, state.flow / 3)) : 0;
-    const erode = state.flow > 0 ? Math.min(44, result.erosion * .32 * Math.min(1, state.flow / 3)) : 0;
+    const deposit = state.time > 0 ? Math.min(105, result.deposition * .9 * Math.min(1, Math.max(1, state.flow) / 3)) : 0;
+    const erode = state.time > 0 ? Math.min(44, result.erosion * .32 * Math.min(1, Math.max(1, state.flow) / 3)) : 0;
     const waterWidth = 20 + state.width * 6 + state.amount * 2;
     return `<svg class="river-sim-svg" viewBox="0 0 760 360" role="img" aria-label="流れる水が土地をけずり土砂を運びたい積させるシミュレーション">
       <rect width="760" height="360" fill="#eaf5e5"/><path class="river-land" d="M0 0H760V82c-100 18-176 4-263 22-90 18-170 5-252 20C160 136 78 128 0 146Z"/><path class="river-land bottom" d="M0 248c111-25 181-3 269-16 89-13 161 5 247-10 95-17 159-1 244-17V360H0Z"/>
@@ -47,19 +47,19 @@
     function paint() {
       const result = model(state);
       ui.stage.innerHTML = riverSvg(state, result);
-      let message = !state.flow
+      let message = state.time === 0
         ? "まだ水は流れていません。「水を流す」を押して、川の形や土砂の動きを観察しよう。"
         : result.erosion > result.deposition
           ? "この条件では、けずる働きの指標が、たい積の指標より大きくなっています。速さや傾きを変えて比べよう。"
           : result.erosion < result.deposition
             ? "この条件では、たい積の指標が、けずる働きの指標より大きくなっています。速さや川幅を変えて比べよう。"
             : "この条件では、けずる働きとたい積の指標が同じです。速さや傾きを変えて比べよう。";
-      if (state.flow) message += ` 運ぶ働きの指標は ${result.transport}/100 です。水を流す回数を増やして、図の土砂の動きと比べよう。`;
+      if (state.time > 0) message += ` 運ぶ働きの指標は ${result.transport}/100 です。水を流す回数を増やして、図の土砂の動きと比べよう。`;
       core.renderReadout(ui.readout, { metrics: [
         { label: "けずる働き（指標）", value: `${result.erosion}/100` },
         { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
         { label: "たい積（指標）", value: `${result.deposition}/100` }
-      ], message, note: `水を流した回数：${state.flow}回　／　川幅：${state.width}` });
+      ], message, note: `経過時間：${state.time}分（流した回数の目安：${state.flow}回）　／　川幅：${state.width}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
