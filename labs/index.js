@@ -45,7 +45,13 @@
       if (!window.RikaFiveLabCore || typeof window.RikaFiveLabCore.playback !== "function") await loadScript("labs/lab-core.js?v=playback-core-compat-20261011");
       if (requestSequence !== renderSequence) return null;
       // labs/*.js を正本として読み込み、app.js 内の旧実装より最新の実装を優先する。
-      await loadScript(manifest.script);
+      try {
+        await loadScript(manifest.script);
+      } catch (error) {
+        // app.js には同期済みのLAB本体があるため、個別ファイルの取得失敗時はそれを使う。
+        if (!window.RikaFiveSimulations?.[id]) throw error;
+        console.warn(`LAB script unavailable; using embedded fallback: ${manifest.script}`, error);
+      }
       if (requestSequence !== renderSequence) return null;
     } catch (error) {
       // 古い画面の読み込み失敗で、移動先の画面をエラー表示に上書きしない。
