@@ -6,7 +6,7 @@
   function model(state) {
     // 電池の数が増えるほど電流が大きくなる、条件比較用の簡易モデル。
     const batteryFactor = .8 + state.batteries * .2;
-    const effectiveCurrent = state.current * batteryFactor;
+    const effectiveCurrent = state.on ? state.current * batteryFactor : 0;
     const strength = state.on ? Math.min(100, Math.round(state.turns / 2.5 * effectiveCurrent * (state.core ? 1.45 : .55))) : 0;
     const clips = Math.min(20, Math.floor(strength / 8));
     const range = Math.round(strength / 12);
