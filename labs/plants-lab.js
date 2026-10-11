@@ -29,7 +29,7 @@
     const leaves = Array.from({ length: model.leaves }, (_, index) => {
       const y = Math.max(125, topY + 34 + index * 28);
       const side = index % 2 ? 1 : -1;
-      return `<ellipse class="plant-leaf" cx="${380 + side * 33}" cy="${y}" rx="35" ry="13" transform="rotate(${side * 26} ${380 + side * 33} ${y})"/>`;
+      return `<g transform="rotate(${side * 26} ${380 + side * 33} ${y})"><ellipse class="plant-leaf" cx="${380 + side * 33}" cy="${y}" rx="35" ry="13"/></g>`;
     }).join("");
     const rootLength = sprout ? Math.min(95, 28 + model.height * 11) : model.germination * 36;
     return `<svg class="plant-sim-svg" viewBox="0 0 760 360" role="img" aria-label="種子から植物へ変化するシミュレーション">
