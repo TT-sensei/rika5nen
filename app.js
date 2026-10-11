@@ -493,7 +493,7 @@
       const selected = station.id === state.station;
       return `<g class="weather-station ${selected ? "selected" : ""}"><circle cx="${station.x}" cy="234" r="${selected ? 18 : 13}"/><text x="${station.x}" y="276" text-anchor="middle">${station.label}</text><text class="weather-value" x="${station.x}" y="216" text-anchor="middle">${value}</text></g>`;
     }).join("");
-    return `<svg class="weather-sim-svg" viewBox="0 0 760 360" role="img" aria-label="西から東へ移る雲と各地点の天気">
+    return `<svg class="weather-sim-svg" viewBox="0 0 760 360" role="img" aria-label="${state.wind === "west-east" ? "西から東" : "東から西"}へ移る雲と各地点の天気">
       <defs><linearGradient id="weather-sky" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#cfeafa"/><stop offset="1" stop-color="#f8fbfd"/></linearGradient></defs>
       <rect width="760" height="360" fill="url(#weather-sky)"/><circle class="weather-sun" cx="90" cy="70" r="28"/>
       ${state.map ? `<path class="weather-map-line" d="M110 210 Q185 185 260 208 T410 207 T560 195 T675 215"/><text class="weather-map-label" x="104" y="135">天気図：${directionLabel}</text>` : `<text class="weather-map-label" x="104" y="135">雲の観察：${directionLabel}</text>`}
