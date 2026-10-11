@@ -475,3 +475,30 @@ body{background:radial-gradient(circle at 90% 0,#d7f2df 0,transparent 30rem),var
   .instant-lab .sim-stage{aspect-ratio:19/9}
   .instant-lab .sim-actions button{flex:1 1 auto}
 }
+
+/* A/B comparison readability: keep conditions and result text legible on tablets. */
+.sim-comparison{max-height:220px;padding:9px 10px}
+.comparison-head{gap:8px;margin-bottom:7px;flex-wrap:wrap}
+.comparison-head b{font-size:.8rem}
+.comparison-head span{font-size:.68rem;line-height:1.3}
+.comparison-head button{min-height:32px;padding:4px 9px;font-size:.68rem}
+.comparison-grid{gap:8px}
+.comparison-card{padding:7px 8px}
+.comparison-card>strong{font-size:.74rem}
+.comparison-card>p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;line-height:1.3;font-size:.64rem;min-height:2.6em}
+.comparison-card>.comparison-result{font-size:.68rem}
+.comparison-metrics{gap:4px}
+.comparison-metrics .instant-metric{padding:5px 5px;min-height:38px}
+.comparison-metrics .instant-metric span{font-size:.57rem;line-height:1.2;white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.comparison-metrics .instant-metric b{font-size:.7rem;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:430px){
+  .sim-comparison{padding:8px 6px}
+  .comparison-grid{gap:5px}
+  .comparison-card{padding:6px 5px}
+  .comparison-card>strong{font-size:.68rem}
+  .comparison-card>p{font-size:.59rem}
+  .comparison-metrics .instant-metric{padding:4px 3px}
+  .comparison-metrics .instant-metric span{font-size:.52rem}
+  .comparison-metrics .instant-metric b{font-size:.64rem}
+}
+
