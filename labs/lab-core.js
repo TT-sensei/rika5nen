@@ -62,7 +62,7 @@
   }
 
   function randomizeOneCondition(ui) {
-    const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]')];
+    const ranges = [...ui.panel.querySelectorAll('.range-control input[type="range"]:not(:disabled)')];
     const groups = [...ui.panel.querySelectorAll(".segmented-control")].filter(group => group.querySelectorAll("button").length > 1);
     const choices = [...ranges.map(input => ({ type: "range", input })), ...groups.map(group => ({ type: "choice", group }))];
     if (!choices.length) { ui.feedback.textContent = "この画面では、変えられる条件がまだないよ。"; return; }
