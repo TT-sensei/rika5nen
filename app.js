@@ -595,13 +595,20 @@
   }
 
   function solutionSvg(state, model) {
-    const particles = Array.from({ length: 28 }, (_, i) => {
-      const dissolvedCount = Math.round(model.progress * 28);
-      const dissolved = i < dissolvedCount;
-      const x = 290 + (i * 47) % 180;
-      const y = 176 + (i * 31) % 95;
-      return `<circle class="solution-dot ${dissolved ? "dissolved" : "leftover"}" cx="${x}" cy="${y}" r="${dissolved ? 4 : 6}" style="--delay:${(i % 7) * -.28}s"/>`;
+    const dissolvedCount = Math.round(model.progress * 22);
+    const dissolvedParticles = Array.from({ length: 22 }, (_, i) => {
+      if (i >= dissolvedCount) return "";
+      const x = 300 + (i * 37) % 160;
+      const y = 174 + (i * 23) % 75;
+      return `<circle class="solution-dot dissolved" cx="${x}" cy="${y}" r="4" style="--delay:${(i % 7) * -.28}s"/>`;
     }).join("");
+    const leftoverCount = Math.min(16, Math.round(model.leftover / 3));
+    const leftoverParticles = Array.from({ length: leftoverCount }, (_, i) => {
+      const x = 315 + (i * 29) % 130;
+      const y = 277 - Math.floor(i / 7) * 7 - (i % 3) * 2;
+      return `<circle class="solution-dot leftover" cx="${x}" cy="${y}" r="5"/>`;
+    }).join("");
+    const particles = dissolvedParticles + leftoverParticles;
     if (state.evaporated) return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水を蒸発させた後に物質が残るシミュレーション"><rect width="760" height="360" fill="#fbf6ed"/><ellipse class="dish" cx="380" cy="250" rx="190" ry="35"/><path class="dish-side" d="M190 250q25 65 190 65t190-65"/><g class="crystals">${Array.from({ length: Math.min(28, Math.ceil(model.dissolved + model.leftover)) }, (_, i) => `<rect x="${250 + (i * 43) % 260}" y="${220 - (i % 4) * 9}" width="${8 + i % 5}" height="${8 + i % 4}" rx="2"/>`).join("")}</g><text class="solution-title" x="380" y="55" text-anchor="middle">水を蒸発させたあと</text><text class="solution-caption" x="380" y="335" text-anchor="middle">とけていた物質が、結晶として残る</text></svg>`;
     return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水に物質がとけるシミュレーション"><defs><linearGradient id="solution-water" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#d5f2f4"/><stop offset="1" stop-color="#8ccbd3"/></linearGradient></defs><rect width="760" height="360" fill="#eef8f8"/><path class="beaker" d="M260 55h240M278 55v215q0 28 28 28h108q28 0 28-28V55"/><path class="beaker-water" d="M279 160h202v111q0 27-27 27H306q-27 0-27-27Z" fill="url(#solution-water)"/>${particles}<text class="solution-title" x="380" y="35" text-anchor="middle">${SUBSTANCES.find(item => item.id === state.substance).label}が水に広がる</text><text class="solution-caption" x="380" y="335" text-anchor="middle">${state.stirred ? "かき混ぜている" : "かき混ぜていない"}　・　${state.temperature}℃</text></svg>`;
   }
@@ -625,7 +632,7 @@
         { label: state.evaporated ? "蒸発前にとけた量" : "とけた量", value: `${model.dissolved}g` },
         { label: state.evaporated ? "蒸発前のとけ残り" : "とけ残り", value: `${model.leftover}g` },
         { label: state.evaporated ? "蒸発前の溶解度の目安" : "最終的にとける量", value: `${model.max}g`, detail: `${substance}・${state.water}mL` },
-        { label: state.evaporated ? "蒸発前の状態" : "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : "未飽和" },
+        { label: state.evaporated ? "蒸発前の状態" : "状態", value: model.leftover > 0 && model.dissolved >= model.max ? "飽和" : model.leftover > 0 ? "とけている途中" : "全部とけた" },
         { label: state.evaporated ? "蒸発後に残る物質" : "水と物質の合計", value: `${state.evaporated ? state.amount : state.water + state.amount}g` }
       ], message, note: state.evaporated ? `蒸発後に残る物質：${state.amount}g` : `時間：${state.time}/10　／　温度：${state.temperature}℃` });
       if (evaporateButton) evaporateButton.textContent = state.evaporated ? "水に戻す" : "水を蒸発させる";
