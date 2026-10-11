@@ -32,7 +32,7 @@
       <rect width="760" height="360" fill="url(#weather-sky)"/><circle class="weather-sun" cx="90" cy="70" r="28"/>
       ${state.map ? `<path class="weather-map-line" d="M110 210 Q185 185 260 208 T410 207 T560 195 T675 215"/><text class="weather-map-label" x="104" y="135">天気図：${directionLabel}</text>` : `<text class="weather-map-label" x="104" y="135">雲の観察：${directionLabel}</text>`}
       <g class="weather-cloud" transform="translate(${cloudX} 112)"><circle cx="0" cy="20" r="28"/><circle cx="32" cy="2" r="38"/><circle cx="72" cy="20" r="27"/><rect x="0" y="20" width="72" height="26" rx="13"/><text x="36" y="76" text-anchor="middle">雲</text></g>
-      <path class="weather-arrow" d="M130 92 H${state.wind === "east-west" ? 610 : 640}"/><path class="weather-arrow-head" d="m${state.wind === "east-west" ? 140 : 630} 83 16 9-16 9"/>
+      <path class="weather-arrow" d="${state.wind === "east-west" ? "M640 92 H130" : "M130 92 H640"}"/><path class="weather-arrow-head" d="${state.wind === "east-west" ? "m146 83 -16 9 16 9" : "m624 83 16 9-16 9"}"/>
       ${stationMarkup}<text class="weather-time" x="650" y="332" text-anchor="end">${state.time}時間後</text>
     </svg>`;
   }
