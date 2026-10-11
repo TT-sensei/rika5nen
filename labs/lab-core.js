@@ -208,9 +208,45 @@
     target._labCompareUpdate?.();
   }
 
+  function playback(parent, { interval = 900, onStep, onStateChange } = {}) {
+    let timer = 0;
+    let playing = false;
+    const button = action(parent, "▶ 再生", start, "primary-button playback-button");
+    function stop() {
+      if (timer) window.clearInterval(timer);
+      timer = 0;
+      if (!playing) return;
+      playing = false;
+      button.textContent = "▶ 再生";
+      button.setAttribute("aria-pressed", "false");
+      onStateChange?.(false);
+    }
+    function start() {
+      if (playing) { stop(); return; }
+      playing = true;
+      button.textContent = "Ⅱ 一時停止";
+      button.setAttribute("aria-pressed", "true");
+      onStateChange?.(true);
+      timer = window.setInterval(() => {
+        if (onStep?.() === false) stop();
+      }, interval);
+    }
+    button.setAttribute("aria-pressed", "false");
+    return {
+      stop,
+      isPlaying: () => playing,
+      destroy() {
+        if (timer) window.clearInterval(timer);
+        timer = 0;
+        playing = false;
+        button.remove();
+      }
+    };
+  }
+
   function renderError(root, message) {
     root.innerHTML = `<section class="empty-state lab-error"><h1>LABを読み込めませんでした</h1><p>${esc(message || "画面を更新して、もう一度試してください。")}</p><button class="primary-button" type="button" data-lab-home>シミュレーション一覧へ</button></section>`;
   }
 
-  window.RikaFiveLabCore = { esc, shell, section, range, options, action, presets, renderReadout, renderError };
+  window.RikaFiveLabCore = { esc, shell, section, range, options, action, presets, playback, renderReadout, renderError };
 })();
