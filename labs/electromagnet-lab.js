@@ -12,10 +12,16 @@
   }
 
   function magnetSvg(state, result) {
-    const coils = Math.max(5, Math.round(state.turns / 20));
-    const coilLines = Array.from({ length: Math.min(18, coils) }, (_, i) => `<path class="coil" d="M${286 + i * 11} 106v116"/>`).join("");
+    const coils = Math.max(5, Math.min(18, Math.round(state.turns / 14)));
+    const coilLines = Array.from({ length: coils }, (_, i) => {
+      const x = coils === 1 ? 380 : 278 + i * (204 / (coils - 1));
+      return `<path class="coil" d="M${x.toFixed(1)} 106v116"/>`;
+    }).join("");
     const clips = Array.from({ length: result.clips }, (_, i) => `<circle class="clip" cx="${270 + (i % 10) * 27}" cy="${278 + Math.floor(i / 10) * 25}" r="8"/>`).join("");
-    const field = state.on ? `<ellipse class="magnetic-field" cx="380" cy="164" rx="${115 + result.range * 3}" ry="${75 + result.range * 2}"/>` : "";
+    // 磁力線を複数の閉じた線で表し、強さに応じて広がりを変える。
+    const field = state.on ? Array.from({ length: 3 }, (_, i) =>
+      `<ellipse class="magnetic-field field-${i + 1}" cx="380" cy="164" rx="${85 + result.range * 4 + i * 20}" ry="${52 + result.range * 2 + i * 11}"/>`
+    ).join("") : "";
     return `<svg class="magnet-sim-svg" viewBox="0 0 760 360" role="img" aria-label="電流とコイルと鉄心で電磁石の強さが変化するシミュレーション"><rect width="760" height="360" fill="#fff8df"/>${field}<rect class="iron-core ${state.core ? "present" : "absent"}" x="270" y="116" width="220" height="96" rx="18"/>${coilLines}<path class="wire-end" d="M286 106V70H205M473 106V70h82"/><circle class="battery" cx="180" cy="70" r="23"/><text class="battery-label" x="180" y="76" text-anchor="middle">${state.batteries}個</text><text class="magnet-title" x="380" y="38" text-anchor="middle">電磁石：${state.on ? "電流が流れている" : "電流を切った"}</text><text class="magnet-label" x="380" y="245" text-anchor="middle">${state.core ? "鉄心あり" : "鉄心なし"}　・　${state.turns}回巻き</text>${clips}<text class="clip-label" x="380" y="340" text-anchor="middle">引きつけたクリップ：${result.clips}個</text></svg>`;
   }
 
