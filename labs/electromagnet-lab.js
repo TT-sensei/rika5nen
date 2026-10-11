@@ -54,7 +54,7 @@
     }
     buildControls();
     core.action(ui.actions, "5秒流す", () => { state.on = true; currentSwitch?.set("on"); state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
-    core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
+    core.action(ui.actions, "電流を切る", () => { state.on = false; currentSwitch?.set("off"); paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "強さ・電流・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。電池の数と電流の関係も簡略化しており、実際に測定した値ではありません。";
     paint();
