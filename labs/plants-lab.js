@@ -87,7 +87,7 @@
             : "発芽したね。ここからは日光がある場合とない場合で、成長の違いを比べてみよう。";
       core.renderReadout(ui.readout, { metrics: [
         { label: "発芽", value: status },
-        { label: "根", value: `${Math.round(model.germination * 100)}%` },
+        { label: "発芽の進み具合", value: `${Math.round(model.germination * 100)}%` },
         { label: "茎の高さ", value: `${model.height} cm`, detail: `葉 ${model.leaves}枚` }
       ], message, note: `経過：${growth.days}日　／　温度：${growth.temperature}℃` });
     }
