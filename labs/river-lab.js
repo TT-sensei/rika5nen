@@ -20,13 +20,17 @@
       const y = 112 + Math.sin(i * 1.8) * 22;
       return `<circle class="river-particle ${state.sediment}" cx="${x}" cy="${y}" r="${state.sediment === "gravel" ? 5 : state.sediment === "mud" ? 3 : 4}" style="--delay:${i * -0.15}s"/>`;
     }).join("");
-    const deposit = Math.min(105, 18 + result.deposition * .9);
-    const erode = Math.min(44, 10 + result.erosion * .32);
+    // 水を流すまでは、川岸のけずれ・土砂のたい積を描かない。
+    // 川幅・水量・流速の条件が、図にも見えるように反映する。
+    const deposit = state.flow > 0 ? Math.min(105, result.deposition * .9 * Math.min(1, state.flow / 3)) : 0;
+    const erode = state.flow > 0 ? Math.min(44, result.erosion * .32 * Math.min(1, state.flow / 3)) : 0;
+    const waterWidth = 20 + state.width * 6 + state.amount * 2;
+    const flowDuration = Math.max(.45, 2.2 - state.speed * .3);
     return `<svg class="river-sim-svg" viewBox="0 0 760 360" role="img" aria-label="流れる水が土地をけずり土砂を運びたい積させるシミュレーション">
       <rect width="760" height="360" fill="#eaf5e5"/><path class="river-land" d="M0 0H760V82c-100 18-176 4-263 22-90 18-170 5-252 20C160 136 78 128 0 146Z"/><path class="river-land bottom" d="M0 248c111-25 181-3 269-16 89-13 161 5 247-10 95-17 159-1 244-17V360H0Z"/>
-      <path class="river-water" d="M0 155 C130 128 190 196 303 166 S495 123 760 174"/><path class="river-flow-line" d="M35 153 C155 133 202 184 303 163 S500 131 718 169"/>
+      <path class="river-water" style="stroke-width:${waterWidth}px" d="M0 155 C130 128 190 196 303 166 S495 123 760 174"/><path class="river-flow-line" style="animation-duration:${flowDuration}s" d="M35 153 C155 133 202 184 303 163 S500 131 718 169"/>
       ${particles}<path class="river-eroded" d="M85 145q33-${erode / 2} 65 0v${erode}H85Z"/><path class="river-deposit" d="M604 171q56-${deposit / 2} 105 0v${deposit}H604Z"/>
-      <text class="river-zone" x="76" y="46">上流：けずる</text><text class="river-zone" x="336" y="48">中流：運ぶ</text><text class="river-zone" x="590" y="46">下流：たい積</text>
+      <text class="river-zone" x="76" y="46">上流：けずる</text><text class="river-zone" x="336" y="48">中流：運ぶ</text><text class="river-zone" x="590" y="48">下流：たい積</text>
       <text class="river-callout" x="118" y="316">けずられた場所</text><text class="river-callout" x="614" y="316">土砂がたまる場所</text><text class="river-speed" x="690" y="344" text-anchor="end">流れ ${state.speed}/5</text>
     </svg>`;
   }
