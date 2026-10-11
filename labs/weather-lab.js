@@ -80,10 +80,11 @@
     buildControls();
     advanceButton = core.action(ui.actions, "1時間進める", () => { if (!state.motion) return; state.time = Math.min(8, state.time + 1); timeRange.set(state.time); paint(); }, "primary-button");
     advanceButton.disabled = !state.motion;
-    core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); if (advanceButton) advanceButton.disabled = !state.motion; paint(); }, "secondary-button");
+    const playbackControl = core.playback(ui.actions, { interval: 850, onStateChange: playing => { ui.panel.querySelectorAll("input, button").forEach(control => { control.disabled = playing; }); advanceButton.disabled = playing || !state.motion; }, onStep: () => { if (!state.motion || state.time >= 8) return false; state.time += 1; timeRange.set(state.time); paint(); return state.time < 8; } });
+    core.action(ui.actions, "最初にもどす", () => { playbackControl.stop(); Object.assign(state, DEFAULT); buildControls(); if (advanceButton) advanceButton.disabled = !state.motion; paint(); }, "secondary-button");
     ui.note.textContent = "雲の進む向きを比べる簡易モデルです。実際の雲や天気の変化を正確に予測するものではありません。";
     paint();
-    return () => ui.destroy();
+    return () => { playbackControl.destroy(); ui.destroy(); };
   }
   window.RikaFiveSimulations.weather = { mount };
 })();
