@@ -12,7 +12,9 @@
   }
 
   function pendulumSvg(state, result) {
-    const angle = state.measuring ? Math.sin(Date.now() / 430) * state.amplitude : -state.amplitude;
+    // 表示上の揺れも、計算した周期に合わせる。長いふりこほどゆっくり動く。
+    const phase = Date.now() * 2 * Math.PI / (Math.max(0.1, result.period) * 1000);
+    const angle = state.measuring ? Math.sin(phase) * state.amplitude : -state.amplitude;
     const bobY = 100 + state.length * 1.8;
     const bobRadius = 18 + state.weight / 25;
     const stringLength = bobY - bobRadius - 70;
