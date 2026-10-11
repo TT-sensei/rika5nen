@@ -89,7 +89,7 @@
     if (changedMetric) {
       const previous = before.find(old => old.label === changedMetric.label)?.value || "—";
       ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたよ。へぇ！ " + changedMetric.label + " が " + previous + " → " + changedMetric.value + " に変わった！";
-    } else { ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたよ。図や数値にどんな変化が出たか見てみよう！"; }
+    } else { ui.feedback.textContent = "🎲 「" + changedLabel + "」を変えたけれど、表示される数値は同じみたい。変わらない条件も発見だよ。図にも変化がないか比べてみよう！"; }
   }
 
   function conditionSummary(panel) {
