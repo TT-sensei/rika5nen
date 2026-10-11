@@ -284,7 +284,7 @@
     </g>`;
     return `<svg class="flower-sim-svg" viewBox="0 0 760 360" role="img" aria-label="受粉した花と受粉していない花の比較">
       <rect width="760" height="360" fill="#fff8ed"/><path class="flower-divider" d="M380 55v260"/><text class="flower-title" x="380" y="32" text-anchor="middle">花粉がめしべにつくと、時間とともに実になる</text>
-      ${flower(190, "受粉あり", state.pollen)}${flower(570, "受粉なし", false)}
+      ${flower(190, state.pollen ? "受粉あり" : "操作する花", state.pollen)}${flower(570, "受粉なし", false)}
     </svg>`;
   }
 
@@ -342,12 +342,12 @@
         const germination = core.section(ui.panel, "発芽の条件", "発芽に必要な3条件");
         core.options(germination, { label: "水", values: boolOption, value: growth.water ? "yes" : "no", onChange: value => { growth.water = value === "yes"; paint(); } });
         core.options(germination, { label: "空気", values: boolOption, value: growth.air ? "yes" : "no", onChange: value => { growth.air = value === "yes"; paint(); } });
-        core.range(germination, { label: "温度", min: 5, max: 35, value: growth.temperature, format: value => `${value}℃`, onInput: value => { growth.temperature = value; paint(); } });
+        core.range(germination, { label: "温度", min: 5, max: 45, value: growth.temperature, format: value => `${value}℃`, onInput: value => { growth.temperature = value; paint(); } });
         const growthSection = core.section(ui.panel, "成長と時間");
         core.options(growthSection, { label: "日光", values: boolOption, value: growth.light ? "yes" : "no", onChange: value => { growth.light = value === "yes"; paint(); } });
         core.range(growthSection, { label: "経過日数", min: 0, max: 10, value: growth.days, format: value => `${value}日`, onInput: value => { growth.days = value; paint(); } });
         core.presets(ui.panel, [
-          { id: "germinate", label: "発芽条件OK" }, { id: "no-water", label: "水なし" }, { id: "no-light", label: "日光なし" }
+          { id: "germinate", label: "発芽条件OK" }, { id: "no-water", label: "水なし" }, { id: "no-light", label: "日光なし" }, { id: "hot-temp", label: "高温" }
         ], applyPreset);
       } else {
         const pollen = core.section(ui.panel, "受粉を操作", "花粉の移動を試してみよう");
@@ -362,7 +362,7 @@
 
     function applyPreset(id) {
       if (mode === "growth") {
-        Object.assign(growth, id === "no-water" ? { ...DEFAULT_GROWTH, water: false } : id === "no-light" ? { ...DEFAULT_GROWTH, light: false, days: 8 } : { ...DEFAULT_GROWTH, days: 5 });
+        Object.assign(growth, id === "no-water" ? { ...DEFAULT_GROWTH, water: false } : id === "no-light" ? { ...DEFAULT_GROWTH, light: false, days: 8 } : id === "hot-temp" ? { ...DEFAULT_GROWTH, temperature: 40, days: 5 } : { ...DEFAULT_GROWTH, days: 5 });
       } else {
         Object.assign(flower, id === "no-pollinate" ? { ...DEFAULT_FLOWER, days: 5 } : { ...DEFAULT_FLOWER, pollen: true, source: "人", days: 5 });
       }
@@ -507,6 +507,7 @@
     const ui = core.shell(root, manifest, { onHome: host.onHome });
     const state = { ...DEFAULT };
     let timeRange;
+    let windControl;
     function paint() {
       const stationIndex = STATIONS.findIndex(item => item.id === state.station);
       const current = weatherAt(state.time, stationIndex, state.wind, state.motion, state.frozenTime);
@@ -526,7 +527,15 @@
       const cloud = core.section(ui.panel, "雲の動き");
       core.options(cloud, { label: "動き", values: [{ id: "move", label: "動く" }, { id: "stop", label: "止める" }], value: state.motion ? "move" : "stop", onChange: value => { state.motion = value === "move"; if (!state.motion) state.frozenTime = state.time; timeRange.input.disabled = !state.motion; if (advanceButton) advanceButton.disabled = !state.motion; paint(); } });
       const wind = core.section(ui.panel, "雲の進む向き");
-      core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }], value: state.wind, onChange: value => { state.wind = value; paint(); } });
+      windControl = core.options(wind, { label: "進む向き", values: [{ id: "west-east", label: "西→東" }, { id: "east-west", label: "東→西" }], value: state.wind, onChange: value => {
+        if (!state.motion) {
+          windControl.set(state.wind);
+          ui.feedback.textContent = "雲を止めている間は、進む向きを変えられないよ。雲を動かしてから選んでね。";
+          return;
+        }
+        state.wind = value;
+        paint();
+      } });
       const map = core.section(ui.panel, "表示");
       core.options(map, { label: "天気図", values: [{ id: "show", label: "表示" }, { id: "hide", label: "非表示" }], value: state.map ? "show" : "hide", onChange: value => { state.map = value === "show"; paint(); } });
       const point = core.section(ui.panel, "観察地点");
@@ -554,17 +563,20 @@
 
   function model(state) {
     const energy = state.speed * state.slope * state.amount / 5;
-    const resistance = state.sediment === "gravel" ? 1.25 : state.sediment === "mud" ? .7 : 1;
-    // 水を流していない間は、けずる・運ぶ・たい積する変化は起きない。
+    // 土砂の種類ごとに、けずられやすさと運ばれやすさを分ける。
+    // れきは重く運ばれにくく、細かな泥は流れに乗りやすいという傾向を表す簡易モデル。
+    const erosionFactor = state.sediment === "gravel" ? .75 : state.sediment === "mud" ? .7 : 1;
+    const transportFactor = state.sediment === "gravel" ? .55 : state.sediment === "mud" ? 1.15 : 1;
+    // 経過時間が0の間は、けずる・運ぶ・たい積する変化は起きない。
     // 条件の指標も図と同じく、流し始めてから計算する。
-    const erosion = state.flow > 0 ? Math.min(100, Math.round(energy * 7 * resistance + state.flow * 4)) : 0;
-    const transport = state.flow > 0 ? Math.min(100, Math.round((state.speed * state.amount * 5 + state.flow * 3) * resistance)) : 0;
-    const deposition = state.flow > 0 ? Math.min(100, Math.max(0, Math.round((6 - state.speed) * 12 + (6 - state.slope) * 5 + state.width * 2 - state.flow * 2))) : 0;
+    const erosion = state.time > 0 ? Math.min(100, Math.round(energy * 7 * erosionFactor + state.flow * 4)) : 0;
+    const transport = state.time > 0 ? Math.min(100, Math.round((state.speed * state.amount * 5 + state.flow * 3) * transportFactor)) : 0;
+    const deposition = state.time > 0 ? Math.min(100, Math.max(0, Math.round((6 - state.speed) * 12 + (6 - state.slope) * 5 + state.width * 2 - state.flow * 2))) : 0;
     return { energy, erosion, transport, deposition };
   }
 
   function riverSvg(state, result) {
-    const particleCount = state.flow > 0 ? Math.min(16, 4 + state.flow + state.speed) : 0;
+    const particleCount = state.time > 0 ? Math.min(16, Math.max(2, Math.ceil(result.transport / 7))) : 0;
     const flowDuration = Math.max(.45, 2.2 - state.speed * .3);
     const particles = Array.from({ length: particleCount }, (_, i) => {
       const x = 86 + (i * 43) % 590;
@@ -573,12 +585,12 @@
     }).join("");
     // 水を流すまでは、川岸のけずれ・土砂のたい積を描かない。
     // 川幅・水量・流速の条件が、図にも見えるように反映する。
-    const deposit = state.flow > 0 ? Math.min(105, result.deposition * .9 * Math.min(1, state.flow / 3)) : 0;
-    const erode = state.flow > 0 ? Math.min(44, result.erosion * .32 * Math.min(1, state.flow / 3)) : 0;
+    const deposit = state.time > 0 ? Math.min(105, result.deposition * .9 * Math.min(1, Math.max(1, state.flow) / 3)) : 0;
+    const erode = state.time > 0 ? Math.min(44, result.erosion * .32 * Math.min(1, Math.max(1, state.flow) / 3)) : 0;
     const waterWidth = 20 + state.width * 6 + state.amount * 2;
     return `<svg class="river-sim-svg" viewBox="0 0 760 360" role="img" aria-label="流れる水が土地をけずり土砂を運びたい積させるシミュレーション">
       <rect width="760" height="360" fill="#eaf5e5"/><path class="river-land" d="M0 0H760V82c-100 18-176 4-263 22-90 18-170 5-252 20C160 136 78 128 0 146Z"/><path class="river-land bottom" d="M0 248c111-25 181-3 269-16 89-13 161 5 247-10 95-17 159-1 244-17V360H0Z"/>
-      <path class="river-water" style="stroke-width:${waterWidth}px" d="M0 155 C130 128 190 196 303 166 S495 123 760 174"/><path class="river-flow-line" style="animation-duration:${flowDuration}s" d="M35 153 C155 133 202 184 303 163 S500 131 718 169"/>
+      <path class="river-water" style="stroke-width:${waterWidth}px" d="M0 155 C130 128 190 196 303 166 S495 123 760 174"/>${state.time > 0 ? `<path class="river-flow-line" style="animation-duration:${flowDuration}s" d="M35 153 C155 133 202 184 303 163 S500 131 718 169"/>` : ""}
       ${particles}<path class="river-eroded" d="M85 145q33-${erode / 2} 65 0v${erode}H85Z"/><path class="river-deposit" d="M604 171q56-${deposit / 2} 105 0v${deposit}H604Z"/>
       <text class="river-zone" x="76" y="46">上流：けずる</text><text class="river-zone" x="336" y="48">中流：運ぶ</text><text class="river-zone" x="590" y="48">下流：たい積</text>
       <text class="river-callout" x="118" y="316">けずられた場所</text><text class="river-callout" x="614" y="316">土砂がたまる場所</text><text class="river-speed" x="690" y="344" text-anchor="end">流れ ${state.speed}/5</text>
@@ -592,17 +604,19 @@
     function paint() {
       const result = model(state);
       ui.stage.innerHTML = riverSvg(state, result);
-      let message = !state.flow
+      let message = state.time === 0
         ? "まだ水は流れていません。「水を流す」を押して、川の形や土砂の動きを観察しよう。"
         : result.erosion > result.deposition
-          ? "この条件では、けずる働きがたい積より大きくなっています。速さや傾きを変えて比べよう。"
-          : "この条件では、たい積する働きが目立ちます。流れの速さや川幅を変えて比べよう。";
-      if (state.flow) message += " 水を流した回数が増えるほど、川の形の変化も大きくなります。";
+          ? "この条件では、けずる働きの指標が、たい積の指標より大きくなっています。速さや傾きを変えて比べよう。"
+          : result.erosion < result.deposition
+            ? "この条件では、たい積の指標が、けずる働きの指標より大きくなっています。速さや川幅を変えて比べよう。"
+            : "この条件では、けずる働きとたい積の指標が同じです。速さや傾きを変えて比べよう。";
+      if (state.time > 0) message += ` 運ぶ働きの指標は ${result.transport}/100 です。水を流す回数を増やして、図の土砂の動きと比べよう。`;
       core.renderReadout(ui.readout, { metrics: [
         { label: "けずる働き（指標）", value: `${result.erosion}/100` },
         { label: "運ぶ働き（指標）", value: `${result.transport}/100`, detail: SEDIMENTS.find(item => item.id === state.sediment).label },
         { label: "たい積（指標）", value: `${result.deposition}/100` }
-      ], message, note: `水を流した回数：${state.flow}回　／　川幅：${state.width}` });
+      ], message, note: `経過時間：${state.time}分（流した回数の目安：${state.time > 0 ? Math.max(1, state.flow) : 0}回）　／　川幅：${state.width}` });
     }
     function buildControls() {
       ui.panel.innerHTML = "";
@@ -635,8 +649,29 @@
   const DEFAULT = { water: 100, temperature: 25, amount: 20, stirred: false, substance: "salt", time: 5, evaporated: false };
   const SUBSTANCES = [{ id: "salt", label: "食塩" }, { id: "alum", label: "ミョウバン" }];
 
+  // 水100gあたりにとける量の概算表（g）。点の間は直線補間する。
+  // 食塩は温度による変化が小さく、ミョウバンは高温で大きく増える特徴を表す。
+  // 教材用の概算であり、実験値・製品の溶解度を保証するものではない。
+  const SOLUBILITY = {
+    salt: [[10, 36], [20, 36], [40, 37], [60, 37], [80, 38]],
+    alum: [[10, 9], [20, 11], [30, 14], [40, 19], [50, 28], [60, 45], [70, 65], [80, 95]]
+  };
+
   function capacity(state) {
-    const per100 = state.substance === "salt" ? 36 + (state.temperature - 20) * .06 : Math.max(4, 10 + (state.temperature - 20) * .9);
+    const table = SOLUBILITY[state.substance] || SOLUBILITY.salt;
+    const temperature = Math.max(table[0][0], Math.min(table[table.length - 1][0], state.temperature));
+    let lower = table[0];
+    let upper = table[table.length - 1];
+    for (let i = 1; i < table.length; i += 1) {
+      if (temperature <= table[i][0]) {
+        lower = table[i - 1];
+        upper = table[i];
+        break;
+      }
+    }
+    const ratio = (temperature - lower[0]) / (upper[0] - lower[0] || 1);
+    const per100 = lower[1] + (upper[1] - lower[1]) * ratio;
+    // 水は約1g/mLとして扱う簡易モデル。
     return Math.max(1, Math.round(per100 * state.water / 100));
   }
   function solutionModel(state) {
@@ -649,11 +684,12 @@
   }
 
   function solutionSvg(state, model) {
+    const waterTop = 250 - ((state.water - 50) / 250) * 110;
     const dissolvedCount = Math.round(model.progress * 22);
     const dissolvedParticles = Array.from({ length: 22 }, (_, i) => {
       if (i >= dissolvedCount) return "";
       const x = 300 + (i * 37) % 160;
-      const y = 174 + (i * 23) % 75;
+      const y = waterTop + 14 + (i * 23) % Math.max(1, 284 - waterTop - 14);
       return `<circle class="solution-dot dissolved" cx="${x}" cy="${y}" r="4" style="--delay:${(i % 7) * -.28}s"/>`;
     }).join("");
     const leftoverCount = Math.min(16, Math.round(model.leftover / 3));
@@ -664,7 +700,7 @@
     }).join("");
     const particles = dissolvedParticles + leftoverParticles;
     if (state.evaporated) return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水を蒸発させた後に物質が残るシミュレーション"><rect width="760" height="360" fill="#fbf6ed"/><ellipse class="dish" cx="380" cy="250" rx="190" ry="35"/><path class="dish-side" d="M190 250q25 65 190 65t190-65"/><g class="crystals">${Array.from({ length: Math.min(28, Math.ceil(model.dissolved + model.leftover)) }, (_, i) => `<rect x="${250 + (i * 43) % 260}" y="${220 - (i % 4) * 9}" width="${8 + i % 5}" height="${8 + i % 4}" rx="2"/>`).join("")}</g><text class="solution-title" x="380" y="55" text-anchor="middle">水を蒸発させたあと</text><text class="solution-caption" x="380" y="335" text-anchor="middle">とけていた物質が、結晶として残る</text></svg>`;
-    return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水に物質がとけるシミュレーション"><defs><linearGradient id="solution-water" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#d5f2f4"/><stop offset="1" stop-color="#8ccbd3"/></linearGradient></defs><rect width="760" height="360" fill="#eef8f8"/><path class="beaker" d="M260 55h240M278 55v215q0 28 28 28h108q28 0 28-28V55"/><path class="beaker-water" d="M279 160h202v111q0 27-27 27H306q-27 0-27-27Z" fill="url(#solution-water)"/>${particles}<text class="solution-title" x="380" y="35" text-anchor="middle">${SUBSTANCES.find(item => item.id === state.substance).label}が水に広がる</text><text class="solution-caption" x="380" y="335" text-anchor="middle">${state.stirred ? "かき混ぜている" : "かき混ぜていない"}　・　${state.temperature}℃</text></svg>`;
+    return `<svg class="solution-sim-svg" viewBox="0 0 760 360" role="img" aria-label="水に物質がとけるシミュレーション"><defs><linearGradient id="solution-water" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#d5f2f4"/><stop offset="1" stop-color="#8ccbd3"/></linearGradient></defs><rect width="760" height="360" fill="#eef8f8"/><path class="beaker" d="M260 55h240M278 55v215q0 28 28 28h108q28 0 28-28V55"/><path class="beaker-water" d="M279 ${waterTop}h202v${271 - waterTop}q0 27-27 27H306q-27 0-27-27Z" fill="url(#solution-water)"/>${particles}<text class="solution-title" x="380" y="35" text-anchor="middle">${SUBSTANCES.find(item => item.id === state.substance).label}が水に広がる</text><text class="solution-caption" x="380" y="335" text-anchor="middle">${state.stirred ? "かき混ぜている" : "かき混ぜていない"}　・　${state.temperature}℃</text></svg>`;
   }
 
   function mount(root, { core, host, manifest }) {
@@ -699,8 +735,8 @@
       core.range(water, { label: "とかす物質", min: 5, max: 60, step: 5, value: state.amount, format: value => `${value}g`, onInput: value => { state.amount = value; state.evaporated = false; paint(); } });
       core.options(water, { label: "物質", values: SUBSTANCES, value: state.substance, onChange: value => { state.substance = value; state.evaporated = false; paint(); } });
       const action = core.section(ui.panel, "とかし方と時間");
-      core.options(action, { label: "かき混ぜ", values: [{ id: "no", label: "しない" }, { id: "yes", label: "する" }], value: state.stirred ? "yes" : "no", onChange: value => { state.stirred = value === "yes"; paint(); } });
-      timeRange = core.range(action, { label: "経過", min: 0, max: 10, value: state.time, format: value => `${value}/10`, onInput: value => { state.time = value; paint(); } });
+      core.options(action, { label: "かき混ぜ", values: [{ id: "no", label: "しない" }, { id: "yes", label: "する" }], value: state.stirred ? "yes" : "no", onChange: value => { state.stirred = value === "yes"; state.evaporated = false; paint(); } });
+      timeRange = core.range(action, { label: "経過", min: 0, max: 10, value: state.time, format: value => `${value}/10`, onInput: value => { state.time = value; state.evaporated = false; paint(); } });
       core.presets(ui.panel, [{ id: "stir", label: "かき混ぜる" }, { id: "hot", label: "温度を上げる" }, { id: "alum", label: "ミョウバン" }], id => { Object.assign(state, id === "stir" ? { ...DEFAULT, stirred: true, time: 4 } : id === "hot" ? { ...DEFAULT, temperature: 70, time: 8 } : { ...DEFAULT, substance: "alum", temperature: 60, time: 8 }); buildControls(); paint(); });
     }
     buildControls();
@@ -724,7 +760,7 @@
     // 電池の数が増えるほど電流が大きくなる、条件比較用の簡易モデル。
     const batteryFactor = .8 + state.batteries * .2;
     const effectiveCurrent = state.on ? state.current * batteryFactor : 0;
-    const strength = state.on ? Math.min(100, Math.round(state.turns / 2.5 * effectiveCurrent * (state.core ? 1.45 : .55))) : 0;
+    const strength = state.on ? Math.min(100, Math.round(state.turns / 5.2 * effectiveCurrent * (state.core ? 1.45 : .55))) : 0;
     const clips = Math.min(20, Math.floor(strength / 8));
     const range = Math.round(strength / 12);
     return { strength, clips, range, effectiveCurrent };
@@ -771,7 +807,7 @@
     }
     buildControls();
     core.action(ui.actions, "5秒流す", () => { state.on = true; currentSwitch?.set("on"); state.time = Math.min(30, state.time + 5); paint(); }, "primary-button");
-    core.action(ui.actions, "電流を切る", () => { state.on = false; paint(); }, "secondary-button");
+    core.action(ui.actions, "電流を切る", () => { state.on = false; currentSwitch?.set("off"); paint(); }, "secondary-button");
     core.action(ui.actions, "最初にもどす", () => { Object.assign(state, DEFAULT); buildControls(); paint(); }, "secondary-button");
     ui.note.textContent = "強さ・電流・クリップ数・磁力の広がりは条件を比べるための模型上の目安です。電池の数と電流の関係も簡略化しており、実際に測定した値ではありません。";
     paint();
@@ -871,7 +907,7 @@
   "use strict";
 
   const MANIFESTS = {
-    plants: { id: "plants", title: "植物LAB", unit: "植物の発芽と成長", summary: "発芽に必要な条件と、成長・受粉の変化を時間で見ます。", accent: "#3f8052", script: "labs/plants-lab.js?v=plant-pollination-label-20261011" },
+    plants: { id: "plants", title: "植物LAB", unit: "植物の発芽と成長", summary: "発芽に必要な条件と、成長・受粉の変化を時間で見ます。", accent: "#3f8052", script: "labs/plants-lab.js?v=plant-germination-progress-20261011" },
     animals: { id: "animals", title: "魚のたんじょうLAB", unit: "メダカ・人のたんじょう", summary: "卵の中の変化を日ごとに進め、ふ化から稚魚まで観察します。", accent: "#397aa7", script: "labs/animals-lab.js" },
     weather: { id: "weather", title: "天気LAB", unit: "天気の変化", summary: "雲の動きと観察地点を変えて、天気の移り変わりを見ます。", accent: "#5883a0", script: "labs/weather-lab.js?v=weather-stopped-direction-20261011" },
     river: { id: "river", title: "流れる水LAB", unit: "流れる水のはたらき", summary: "水を流し、けずる・運ぶ・たい積する場所の変化を見ます。", accent: "#2d86a6", script: "labs/river-lab.js?v=river-flow-start-state-20261011" },
@@ -911,7 +947,7 @@
     if (!manifest) { root.innerHTML = `<section class="empty-state"><h1>このLABはまだありません</h1><button class="primary-button" type="button" data-lab-home>一覧へ戻る</button></section>`; return null; }
     root.innerHTML = `<section class="lab-loading"><span class="lab-loading-mark" aria-hidden="true">${manifest.title.slice(0, 1)}</span><h1>${manifest.title}を準備しています</h1><p>シミュレーションを読み込んでいます。</p></section>`;
     try {
-      if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=randomizer-condition-only-20261011");
+      if (!window.RikaFiveLabCore) await loadScript("labs/lab-core.js?v=randomizer-mode-selectors-20261011");
       if (requestSequence !== renderSequence) return null;
       // labs/*.js を正本として読み込み、app.js 内の旧実装より最新の実装を優先する。
       await loadScript(manifest.script);
